@@ -1,0 +1,29 @@
+import { SiteConfig } from '../types';
+
+export const siteConfig: SiteConfig = {
+  nombreMarca: 'ZUniforme',
+  subtitulo: 'Uniformes antifluidos y ropa de trabajo para el sector salud y empresas',
+  ciudad: 'Neiva',
+  departamento: 'Huila',
+  pais: 'Colombia',
+  whatsappNumero: '573167402891', // Default contact number
+  whatsappFormatoDisplay: '+57 316 740 2891',
+  instagramUsuario: 'zuniforme',
+  instagramUrl: 'https://instagram.com/zuniforme',
+  emailContacto: 'contacto@zuniforme.com',
+  direccionLocal: 'Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia',
+  horarioAtencion: 'Lunes a Sábado: 8:00 AM - 6:30 PM'
+};
+
+export const BRAND_COLORS = {
+  mauvePrimary: '#A8577F',
+  mauveDark: '#8A3B63',
+  mauveLight: '#C3799F',
+  dustyRose: '#F4B8CC',
+  dustyRoseLight: '#FBE8EF',
+  dustyRoseSubtle: '#FFF5F8',
+  warmNeutral: '#FAF7F5',
+  warmWhite: '#FFFFFF',
+  stoneText: '#2D2729',
+  mutedText: '#6E6468',
+};
