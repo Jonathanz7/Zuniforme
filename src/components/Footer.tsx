@@ -12,7 +12,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
   const waLink = createWhatsAppLink(createGeneralWhatsAppMessage());
 
   return (
-    <footer className="bg-[#1E181B] text-stone-300 pt-16 pb-12 border-t border-stone-800">
+    <footer className="bg-[#1E181B] text-stone-300 pt-16 pb-28 sm:pb-24 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-stone-800/80">
@@ -47,7 +47,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
 
           {/* Quick Links */}
           <div className="lg:col-span-3 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Navegación</h3>
+            <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-white">Navegación</h3>
             <ul className="space-y-2 text-xs">
               <li>
                 <a href="#inicio" className="hover:text-[#F4B8CC] transition-colors">Inicio</a>
@@ -69,7 +69,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
 
           {/* Contact Details */}
           <div className="lg:col-span-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Ubicación & Contacto</h3>
+            <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-white">Ubicación & Contacto</h3>
             <ul className="space-y-2.5 text-xs text-stone-400">
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#F4B8CC] shrink-0 mt-0.5" />
@@ -94,9 +94,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
 
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <p className="flex items-center gap-1">
+        {/* Bottom bar with ample right clearance so floating button never covers Modo Administrador */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500 sm:pr-24 lg:pr-32">
+          <p className="flex items-center gap-1 text-center sm:text-left">
             © {new Date().getFullYear()} ZUniforme. Confeccionado con{' '}
             <Heart className="w-3.5 h-3.5 text-[#F4B8CC] fill-[#F4B8CC]" /> en Neiva, Huila.
           </p>
@@ -105,9 +105,9 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
             {/* Admin entry point */}
             <button
               onClick={onOpenAdmin}
-              className="inline-flex items-center gap-1.5 text-stone-400 hover:text-[#F4B8CC] transition-colors text-[11px]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800/80 hover:bg-stone-800 text-stone-400 hover:text-[#F4B8CC] transition-colors text-[11px] border border-stone-700/60"
             >
-              <Lock className="w-3 h-3" />
+              <Lock className="w-3 h-3 text-[#A8577F]" />
               <span>Modo Administrador (Catálogo)</span>
             </button>
           </div>

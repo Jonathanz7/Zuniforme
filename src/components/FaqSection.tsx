@@ -45,7 +45,7 @@ export const FaqSection: React.FC = () => {
             <HelpCircle className="w-3.5 h-3.5 text-[#A8577F]" />
             Dudas Comunes
           </div>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 tracking-tight">
+          <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-stone-900 tracking-tight">
             Preguntas Frecuentes
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-stone-600">
@@ -64,9 +64,9 @@ export const FaqSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
-                  className="w-full flex items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-stone-800 hover:text-[#A8577F] transition-colors"
+                  className="w-full flex items-center justify-between p-5 text-left text-sm sm:text-base font-semibold text-stone-800 hover:text-[#A8577F] transition-colors"
                 >
-                  <span className="pr-4">{faq.pregunta}</span>
+                  <span className="font-heading pr-4">{faq.pregunta}</span>
                   <ChevronDown
                     className={`w-5 h-5 text-stone-400 transition-transform duration-200 shrink-0 ${
                       isOpen ? 'transform rotate-180 text-[#A8577F]' : ''
@@ -75,7 +75,7 @@ export const FaqSection: React.FC = () => {
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-stone-600 leading-relaxed border-t border-stone-50 bg-[#FAF8F7]/50">
+                  <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-stone-600 leading-relaxed sm:leading-loose border-t border-stone-50 bg-[#FAF8F7]/50">
                     {faq.respuesta}
                   </div>
                 )}

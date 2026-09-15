@@ -38,11 +38,11 @@ export const ContactSection: React.FC = () => {
               Atención Directa
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight leading-snug">
               ¿Tienes dudas o deseas una asesoría personalizada?
             </h2>
 
-            <p className="mt-4 text-sm text-stone-600 leading-relaxed">
+            <p className="mt-4 text-sm sm:text-base text-stone-600 leading-relaxed sm:leading-loose">
               Estamos aquí para ayudarte a elegir tu uniforme soñado o coordinar la dotación de tu clínica. 
               Escríbenos directamente o visítanos en Neiva.
             </p>
@@ -109,7 +109,7 @@ export const ContactSection: React.FC = () => {
 
           {/* Right Column: Interactive Quick Inquiry Form */}
           <div className="lg:col-span-7 bg-[#FAF7F5] rounded-3xl p-6 sm:p-10 border border-stone-200 shadow-sm">
-            <h3 className="text-xl sm:text-2xl font-bold text-stone-900">
+            <h3 className="font-heading text-xl sm:text-2xl font-bold text-stone-900">
               Envíanos un mensaje
             </h3>
             <p className="text-xs sm:text-sm text-stone-500 mt-1 mb-6">

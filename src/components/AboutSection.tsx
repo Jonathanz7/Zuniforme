@@ -29,22 +29,22 @@ export const AboutSection: React.FC = () => {
               </div>
 
               {/* Floating Overlay Card: Huila Craftsmanship */}
-              <div className="absolute -bottom-6 -left-4 sm:-left-8 bg-white p-5 rounded-3xl shadow-xl border border-stone-200/80 max-w-xs sm:max-w-sm">
+              <div className="absolute -bottom-4 left-2 sm:-bottom-6 sm:-left-8 z-10 bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200/80 max-w-[260px] sm:max-w-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FCE8EF] text-[#A8577F] flex items-center justify-center font-script text-2xl font-bold">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#FCE8EF] text-[#A8577F] flex items-center justify-center font-script text-xl sm:text-2xl font-bold shrink-0">
                     ZU
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-stone-900">Pasión desde Neiva</h3>
-                    <p className="text-xs text-stone-500">Confección 100% colombiana hecha con amor y precisión</p>
+                    <h3 className="font-heading text-xs sm:text-sm font-bold text-stone-900">Pasión desde Neiva</h3>
+                    <p className="text-[11px] sm:text-xs text-stone-500">Confección 100% colombiana hecha con amor y precisión</p>
                   </div>
                 </div>
               </div>
 
               {/* Floating Stat Badge */}
-              <div className="absolute -top-4 -right-4 sm:-right-6 bg-white py-3 px-4 rounded-2xl shadow-lg border border-[#F4B8CC]/50 text-center">
-                <span className="block text-2xl font-black text-[#A8577F]">+5 Años</span>
-                <span className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">Vistiendo a la salud</span>
+              <div className="absolute -top-3 right-2 sm:-top-4 sm:-right-6 z-10 bg-white py-2 px-3.5 sm:py-3 sm:px-4 rounded-xl sm:rounded-2xl shadow-lg border border-[#F4B8CC]/50 text-center">
+                <span className="font-heading block text-xl sm:text-2xl font-bold text-[#A8577F]">+5 Años</span>
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold text-stone-500 tracking-wider">Vistiendo a la salud</span>
               </div>
 
             </div>
@@ -58,17 +58,17 @@ export const AboutSection: React.FC = () => {
               Nuestra Historia & Esencia
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-stone-900 tracking-tight leading-tight">
+            <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-stone-900 tracking-tight leading-snug">
               Creemos que cuidar de otros también merece verse <span style={{ color: '#A8577F' }}>elegante</span>.
             </h2>
 
-            <p className="mt-6 text-sm sm:text-base text-stone-600 leading-relaxed">
+            <p className="mt-6 text-sm sm:text-base text-stone-600 leading-relaxed sm:leading-loose">
               <strong>ZUniforme</strong> nació en la ciudad de <strong>Neiva (Huila)</strong> con un propósito claro: 
               transformar el concepto de la ropa médica y laboral. Queríamos dejar atrás los uniformes rígidos, incómodos y sin forma, 
               para crear prendas que brinden la protección necesaria en el sector salud sin perder la feminidad, el estilo ni la comodidad que necesitas en turnos de 12 o 24 horas.
             </p>
 
-            <p className="mt-4 text-sm sm:text-base text-stone-600 leading-relaxed">
+            <p className="mt-4 text-sm sm:text-base text-stone-600 leading-relaxed sm:leading-loose">
               Cada uno de nuestros uniformes es confeccionado con <strong>telas antifluido stretch de tecnología superior</strong> (que repelen fluidos, no se decoloran y se secan al instante) y cuenta con la opción de <strong>bordado personalizado</strong> de tu nombre, especialidad o el logotipo de tu clínica o empresa.
             </p>
 

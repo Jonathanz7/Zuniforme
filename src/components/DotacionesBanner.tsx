@@ -29,11 +29,11 @@ export const DotacionesBanner: React.FC = () => {
                 Ventas Corporativas & Por Mayor
               </div>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+              <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
                 ¿Buscas uniformar tu clínica, consultorio o empresa?
               </h2>
 
-              <p className="mt-4 text-sm sm:text-base text-stone-300 leading-relaxed max-w-2xl">
+              <p className="mt-4 text-sm sm:text-base text-stone-300 leading-relaxed sm:leading-loose max-w-2xl">
                 En <strong>ZUniforme</strong> creamos dotaciones integrales con precios especiales a partir de <strong>6 unidades</strong>. 
                 Adaptamos los colores de la tela a la identidad corporativa de tu marca y bordamos con alta definición el logo de tu empresa y el nombre de cada colaborador.
               </p>

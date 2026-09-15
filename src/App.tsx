@@ -19,6 +19,7 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedColorName, setSelectedColorName] = useState<string | undefined>(undefined);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isNearFooter, setIsNearFooter] = useState(false);
 
   // Initialize products on load from localStorage or default dataset
   useEffect(() => {
@@ -29,6 +30,24 @@ export default function App() {
     if (window.location.hash === '#admin') {
       setIsAdminOpen(true);
     }
+  }, []);
+
+  // Monitor scroll distance to collapse floating button when reaching the footer
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      if (scrollY + windowHeight >= docHeight - 380) {
+        setIsNearFooter(true);
+      } else {
+        setIsNearFooter(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleSaveProducts = (updatedProducts: Product[]) => {
@@ -99,22 +118,30 @@ export default function App() {
       />
 
       {/* Floating WhatsApp Action Button */}
-      <aside aria-label="Contacto flotante" className="fixed bottom-6 right-6 z-30">
+      <aside aria-label="Contacto flotante" className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-30 transition-all duration-300">
         <a
           href={floatingWaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex items-center gap-2 p-3.5 sm:px-4 sm:py-3 rounded-full text-white shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 active:translate-y-0"
+          className={`group relative flex items-center gap-2 rounded-full text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 ${
+            isNearFooter
+              ? 'w-12 h-12 justify-center p-0 scale-95 opacity-90 hover:opacity-100'
+              : 'p-3 sm:px-4 sm:py-3'
+          }`}
           style={{
             background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
           }}
           aria-label="Abrir WhatsApp para consultas directas"
         >
-          <MessageCircle className="w-6 h-6 fill-white" />
-          <span className="hidden sm:inline text-xs font-bold whitespace-nowrap">
+          <MessageCircle className="w-6 h-6 fill-white shrink-0" />
+          <span
+            className={`text-xs font-bold whitespace-nowrap transition-all duration-300 ${
+              isNearFooter ? 'hidden' : 'hidden sm:inline'
+            }`}
+          >
             ¿Deseas asesoría? Escríbenos
           </span>
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
         </a>
       </aside>
     </div>

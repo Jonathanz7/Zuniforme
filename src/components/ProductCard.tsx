@@ -124,7 +124,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         {/* Product Title */}
         <h3 
           onClick={() => onSelect(product, currentVariant?.color)}
-          className="text-base font-bold text-stone-900 group-hover:text-[#A8577F] transition-colors line-clamp-1 cursor-pointer"
+          className="font-heading text-base font-bold text-stone-900 group-hover:text-[#A8577F] transition-colors line-clamp-1 cursor-pointer"
           title={product.nombre}
         >
           {product.nombre}
@@ -154,7 +154,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         <div className="mt-4 pt-3.5 border-t border-stone-100 flex items-center justify-between gap-2">
           <div>
             <span className="block text-[10px] uppercase font-bold text-stone-400">Precio</span>
-            <span className="text-sm sm:text-base font-extrabold text-stone-900">
+            <span className="font-heading text-sm sm:text-base font-bold text-stone-900">
               {formatCOP(product.precio)}
             </span>
           </div>

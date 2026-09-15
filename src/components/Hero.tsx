@@ -28,7 +28,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
     'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop';
 
   return (
-    <section id="inicio" className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
+    <section id="inicio" className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
       {/* Soft Background Accents */}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-[#FCE8EF] filter blur-3xl opacity-60 pointer-events-none" />
       <div className="absolute top-1/2 left-0 -ml-20 w-80 h-80 rounded-full bg-[#FDF2F7] filter blur-3xl opacity-70 pointer-events-none" />
@@ -44,8 +44,8 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
               <span>Confección Femenina y Profesional · Neiva, Huila</span>
             </div>
 
-            {/* Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 leading-[1.15]">
+            {/* Headline with Poppins font-heading */}
+            <h1 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-stone-900 leading-[1.18]">
               Uniformes antifluidos con <br className="hidden sm:inline" />
               <span 
                 className="relative inline-block"
@@ -62,7 +62,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
             </h1>
 
             {/* Subtitle */}
-            <p className="mt-6 text-base sm:text-lg text-stone-600 max-w-2xl leading-relaxed">
+            <p className="mt-6 text-base sm:text-lg text-stone-600 max-w-2xl leading-relaxed sm:leading-loose">
               Diseñamos y confeccionamos uniformes médicos (scrubs), batas y chaquetas antifluidos para el 
               <strong className="text-stone-800 font-semibold"> sector salud</strong> y 
               <strong className="text-stone-800 font-semibold"> dotaciones corporativas</strong>. 
@@ -100,7 +100,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Antifluido Real</h2>
+                  <h2 className="font-heading text-xs font-bold text-stone-900 uppercase tracking-wider">Antifluido Real</h2>
                   <p className="text-xs text-stone-500 mt-0.5">Telas con repelencia a fluidos y cloro</p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                   <Scissors className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Taller Propio</h2>
+                  <h2 className="font-heading text-xs font-bold text-stone-900 uppercase tracking-wider">Taller Propio</h2>
                   <p className="text-xs text-stone-500 mt-0.5">Bordados y ajustes a tu medida</p>
                 </div>
               </div>
@@ -120,7 +120,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider">Neiva a Colombia</h2>
+                  <h2 className="font-heading text-xs font-bold text-stone-900 uppercase tracking-wider">Neiva a Colombia</h2>
                   <p className="text-xs text-stone-500 mt-0.5">Envíos rápidos a todo el país</p>
                 </div>
               </div>
@@ -149,8 +149,8 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Top Badge on Image */}
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#A8577F] text-white shadow-md">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#A8577F] text-white shadow-md font-heading">
                     <Sparkles className="w-3 h-3" />
                     Producto Estrella
                   </span>
@@ -167,7 +167,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                 {/* Overlaid Card Info with Interactive Swatches */}
                 <div 
                   onClick={(e) => e.stopPropagation()} 
-                  className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+                  className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 p-3.5 sm:p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -176,18 +176,18 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                       </span>
                       <h3 
                         onClick={() => onSelectProduct?.(product, currentVariant?.color)}
-                        className="text-sm font-bold text-stone-900 mt-1 cursor-pointer hover:text-[#A8577F] transition-colors"
+                        className="font-heading text-sm font-bold text-stone-900 mt-1 cursor-pointer hover:text-[#A8577F] transition-colors"
                       >
                         {product?.nombre || 'Conjunto Aura'}
                       </h3>
                     </div>
-                    <span className="text-sm font-extrabold text-[#A8577F] shrink-0">
+                    <span className="font-heading text-sm font-bold text-[#A8577F] shrink-0">
                       {product?.precio ? formatCOP(product.precio) : '$135.000 COP'}
                     </span>
                   </div>
                   
                   {/* Interactive Swatches - Change photo live */}
-                  <div className="mt-3 pt-2.5 border-t border-stone-100">
+                  <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-2.5 border-t border-stone-100">
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <span className="text-[11px] text-stone-500 font-medium">
                         Color:{' '}
@@ -248,25 +248,25 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                 </div>
               </div>
 
-              {/* Floating Badge 1: Quality guarantee */}
-              <div className="absolute -top-4 -left-4 sm:-left-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-[#F4B8CC]/40 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FCE8EF] flex items-center justify-center text-[#A8577F]">
-                  <Sparkles className="w-5 h-5" />
+              {/* Floating Badge 1: Quality guarantee - with safe z-index and padding */}
+              <div className="absolute -top-3 -left-2 sm:-top-4 sm:-left-6 z-10 bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl shadow-xl border border-[#F4B8CC]/40 flex items-center gap-2.5 sm:gap-3 max-w-[170px] sm:max-w-none">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FCE8EF] flex items-center justify-center text-[#A8577F] shrink-0">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-stone-900">4-Way Stretch</p>
-                  <p className="text-[11px] text-stone-500">Comodidad 24/7</p>
+                  <p className="font-heading text-xs font-bold text-stone-900">4-Way Stretch</p>
+                  <p className="text-[10px] sm:text-[11px] text-stone-500">Comodidad 24/7</p>
                 </div>
               </div>
 
               {/* Floating Badge 2: Bordado personalizado */}
-              <div className="absolute -bottom-4 -right-2 sm:-right-4 bg-white/95 backdrop-blur-md py-2.5 px-4 rounded-2xl shadow-xl border border-stone-200/80 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#A8577F] text-white flex items-center justify-center text-xs font-bold font-script">
+              <div className="absolute -bottom-3 -right-1 sm:-bottom-4 sm:-right-4 z-10 bg-white/95 backdrop-blur-md py-2 px-3 sm:py-2.5 sm:px-4 rounded-2xl shadow-xl border border-stone-200/80 flex items-center gap-2 sm:gap-2.5">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#A8577F] text-white flex items-center justify-center text-xs font-bold font-script shrink-0">
                   ZU
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-stone-900">Bordado Gratis</p>
-                  <p className="text-[10px] text-stone-500">En compras mayores a 3 uds</p>
+                  <p className="font-heading text-xs font-bold text-stone-900">Bordado Gratis</p>
+                  <p className="text-[10px] text-stone-500">En compras &gt; 3 uds</p>
                 </div>
               </div>
 
