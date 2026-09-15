@@ -8,7 +8,9 @@ import {
 } from '../utils/productStorage';
 import { 
   X, Plus, Trash2, Edit, Download, Copy, Check, Lock, 
-  RotateCcw, Sparkles, Image as ImageIcon, Upload, Save, HelpCircle, Palette
+  RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
+  AlertCircle, CheckCircle2, Loader2, ShieldCheck,
+  ExternalLink, Server
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -26,28 +28,91 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'lista' | 'editor' | 'github'>('lista');
+  const [activeTab, setActiveTab] = useState<'lista' | 'editor' | 'respaldo'>('lista');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    text: string;
+    commitUrl?: string;
+  } | null>(null);
 
   if (!isOpen) return null;
 
-  const showNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 3500);
+  const showNotification = (
+    text: string, 
+    type: 'success' | 'error' | 'info' = 'success',
+    commitUrl?: string
+  ) => {
+    setNotification({ text, type, commitUrl });
+    if (type !== 'error') {
+      setTimeout(() => setNotification(null), 8000);
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Default master password for store owner
-    if (passwordInput.trim().toLowerCase() === 'zuniforme' || passwordInput.trim() === 'admin2025' || passwordInput.trim() === '1234') {
-      setIsAuthenticated(true);
-      setPasswordError('');
-    } else {
-      setPasswordError('Contraseña incorrecta. (Prueba con "zuniforme")');
+    const cleanPass = passwordInput.trim();
+    if (!cleanPass) {
+      setPasswordError('Por favor ingresa tu contraseña de administrador');
+      return;
+    }
+
+    // Permitir acceso visual al panel y registrar la contraseña para enviarla a /api/update-catalog
+    setAdminPassword(cleanPass);
+    setIsAuthenticated(true);
+    setPasswordError('');
+  };
+
+  /**
+   * Envía el catálogo a la función serverless segura en Vercel (/api/update-catalog).
+   * El token de GitHub NUNCA toca el navegador, vive exclusivamente en las variables de entorno de Vercel.
+   */
+  const publishToVercel = async (productsToPublish: Product[]): Promise<boolean> => {
+    setIsPublishing(true);
+    showNotification('Enviando catálogo al servidor seguro de Vercel...', 'info');
+
+    try {
+      const response = await fetch('/api/update-catalog', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminPassword: adminPassword || passwordInput.trim(),
+          products: productsToPublish,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.success) {
+        showNotification(
+          data.message || '✅ Catálogo publicado, tu sitio se actualizará en menos de un minuto.',
+          'success',
+          data.commitUrl
+        );
+        return true;
+      } else {
+        const errorMsg = data.error || `Error HTTP ${response.status}: ${response.statusText}`;
+        showNotification(
+          `Guardado en tu navegador. Aviso de Vercel: ${errorMsg}`,
+          'error'
+        );
+        return false;
+      }
+    } catch (err: any) {
+      showNotification(
+        `Guardado en tu navegador. No se pudo contactar la función serverless (/api/update-catalog): ${err?.message || 'Error de conexión'}. Si aún no has desplegado a Vercel, puedes usar la pestaña "Respaldo Manual".`,
+        'error'
+      );
+      return false;
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -85,15 +150,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setActiveTab('editor');
   };
 
-  const handleDeleteProduct = (id: string) => {
-    if (window.confirm('¿Estás segura de eliminar este producto del catálogo?')) {
+  const handleDeleteProduct = async (id: string) => {
+    const prodToDelete = products.find(p => p.id === id);
+    const prodName = prodToDelete?.nombre || 'prenda';
+
+    if (window.confirm(`¿Estás segura de eliminar "${prodName}" del catálogo?`)) {
       const updated = products.filter(p => p.id !== id);
       onSaveProducts(updated);
-      showNotification('Producto eliminado del catálogo local');
+      await publishToVercel(updated);
     }
   };
 
-  const handleSaveProductForm = (e: React.FormEvent) => {
+  const handleSaveProductForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
 
@@ -108,21 +176,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     const index = products.findIndex(p => p.id === editingProduct.id);
+    const isNew = index < 0;
     let updatedList: Product[];
-    if (index >= 0) {
+    if (!isNew) {
       updatedList = [...products];
       updatedList[index] = editingProduct;
     } else {
       updatedList = [editingProduct, ...products];
     }
 
+    // 1. Guardar de inmediato en memoria y localStorage del navegador
     onSaveProducts(updatedList);
-    showNotification('¡Producto guardado exitosamente en el catálogo!');
     setActiveTab('lista');
     setEditingProduct(null);
+
+    // 2. Publicar a través de la función serverless segura
+    await publishToVercel(updatedList);
   };
 
-  // Color variant helpers inside editor
+  const handleManualSyncNow = async () => {
+    await publishToVercel(products);
+  };
+
+  // Ayudantes para variantes de color
   const handleAddVariant = () => {
     if (!editingProduct) return;
     const newVariant: ColorVariant = {
@@ -171,7 +247,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     if (window.confirm('¿Restablecer el catálogo a los productos originales de ZUniforme?')) {
       const reset = resetToDefaultProducts();
       onSaveProducts(reset);
-      showNotification('Catálogo restablecido al estado original');
+      showNotification('Catálogo restablecido al estado original', 'info');
     }
   };
 
@@ -180,27 +256,33 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 3000);
-    showNotification('¡Código TypeScript copiado al portapapeles!');
+    showNotification('¡Código TypeScript copiado al portapapeles!', 'success');
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden my-auto flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden my-auto flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Top Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF7F5]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#A8577F] text-white flex items-center justify-center font-bold">
               ZU
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-stone-900">
-                Gestor de Catálogo (Panel Administrador)
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-stone-900">
+                  Gestor de Catálogo ZUniforme
+                </h2>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Servidor Seguro Vercel
+                </span>
+              </div>
               <p className="text-xs text-stone-500">
-                Agrega, edita o elimina prendas sin tocar código
+                Publicación directa a GitHub mediante función serverless protegida
               </p>
             </div>
           </div>
@@ -215,11 +297,31 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </button>
         </div>
 
-        {/* Notifications Toast */}
+        {/* Global Notifications Toast */}
         {notification && (
-          <div className="bg-[#25D366] text-white px-6 py-2 text-xs font-bold flex items-center justify-between">
-            <span>{notification}</span>
-            <button onClick={() => setNotification(null)}>✕</button>
+          <div className={`px-6 py-2.5 text-xs font-bold flex items-center justify-between transition-all ${
+            notification.type === 'success' ? 'bg-[#25D366] text-white' :
+            notification.type === 'error' ? 'bg-red-600 text-white' :
+            'bg-[#A8577F] text-white'
+          }`}>
+            <div className="flex items-center gap-2">
+              {notification.type === 'success' && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+              {notification.type === 'error' && <AlertCircle className="w-4 h-4 shrink-0" />}
+              {notification.type === 'info' && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+              <span>{notification.text}</span>
+              {notification.commitUrl && (
+                <a
+                  href={notification.commitUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline ml-2 inline-flex items-center gap-1 hover:opacity-90"
+                >
+                  Ver commit en GitHub
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+            <button onClick={() => setNotification(null)} className="opacity-80 hover:opacity-100 ml-4">✕</button>
           </div>
         )}
 
@@ -232,8 +334,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
             <div>
               <h3 className="text-lg font-bold text-stone-900">Acceso Administrador</h3>
-              <p className="text-xs text-stone-500 mt-1">
-                Ingresa la clave para gestionar productos y fotos del catálogo.
+              <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                Ingresa la contraseña configurada en tu variable <code>ADMIN_PASSWORD</code> de Vercel.
               </p>
             </div>
 
@@ -243,7 +345,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   type="password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Contraseña (ej. zuniforme)"
+                  placeholder="Ingresa tu contraseña"
                   className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:border-[#A8577F] focus:outline-none text-center text-sm"
                   autoFocus
                 />
@@ -254,26 +356,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl font-bold text-white text-xs uppercase tracking-wider"
+                className="w-full py-3 rounded-xl font-bold text-white text-xs uppercase tracking-wider hover:opacity-90 transition-opacity"
                 style={{ background: '#A8577F' }}
               >
                 Ingresar al Administrador
               </button>
 
-              <p className="text-[11px] text-stone-400">
-                Clave por defecto: <strong className="text-stone-600">zuniforme</strong>
-              </p>
+              <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-stone-500 text-[11px] text-left space-y-1">
+                <p className="font-semibold text-stone-700 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Seguridad Máxima:
+                </p>
+                <p>
+                  Esta contraseña se valida en el servidor de Vercel contra la variable <code>ADMIN_PASSWORD</code>. Los tokens de GitHub nunca se guardan en el navegador.
+                </p>
+              </div>
             </form>
           </div>
         ) : (
           <>
             {/* Nav Tabs */}
-            <div className="flex items-center justify-between px-6 pt-3 border-b border-stone-200 bg-white">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between px-6 pt-3 border-b border-stone-200 bg-white overflow-x-auto">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('lista')}
-                  className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
+                  className={`px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === 'lista'
                       ? 'border-[#A8577F] text-[#A8577F]'
                       : 'border-transparent text-stone-500 hover:text-stone-800'
@@ -286,56 +394,76 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveTab('editor')}
-                    className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
+                    className={`px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === 'editor'
                         ? 'border-[#A8577F] text-[#A8577F]'
                         : 'border-transparent text-stone-500 hover:text-stone-800'
                     }`}
                   >
-                    {editingProduct.id.startsWith('zu-') ? 'Editando Producto' : 'Nuevo Producto'}
+                    {editingProduct.id.startsWith('zu-') ? 'Editando Prenda' : 'Nueva Prenda'}
                   </button>
                 )}
 
+                {/* TAB: Respaldo manual */}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('github')}
-                  className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
-                    activeTab === 'github'
+                  onClick={() => setActiveTab('respaldo')}
+                  className={`px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'respaldo'
                       ? 'border-[#A8577F] text-[#A8577F]'
                       : 'border-transparent text-stone-500 hover:text-stone-800'
                   }`}
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Guardar Permanente en GitHub / Vercel</span>
+                  <span>Respaldo Manual</span>
                 </button>
               </div>
 
               {activeTab === 'lista' && (
-                <button
-                  type="button"
-                  onClick={handleStartCreate}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Nuevo Producto</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleManualSyncNow}
+                    disabled={isPublishing}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[#8C3D65] bg-[#FCE8EF] hover:bg-[#F3AFC8]/40 transition-colors disabled:opacity-50 shrink-0"
+                    title="Publica todo el catálogo actual a Vercel/GitHub"
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Server className="w-3.5 h-3.5" />
+                    )}
+                    <span className="hidden sm:inline">Publicar Catálogo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleStartCreate}
+                    disabled={isPublishing}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shrink-0 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Nuevo Producto</span>
+                  </button>
+                </div>
               )}
             </div>
 
             {/* Tab Contents */}
             <div className="p-6 overflow-y-auto flex-grow">
               
-              {/* TAB 1: PRODUCT LIST */}
+              {/* TAB 1: LISTA DE PRODUCTOS */}
               {activeTab === 'lista' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs text-stone-500 pb-2 border-b border-stone-100">
-                    <span>
-                      Los cambios que realices se guardan inmediatamente en tu navegador y actualizan la vista del catálogo.
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-500 pb-2 border-b border-stone-100">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Al guardar o eliminar una prenda, se publica automáticamente a GitHub a través de Vercel.
                     </span>
                     <button
                       type="button"
                       onClick={handleReset}
-                      className="text-[#A8577F] hover:underline flex items-center gap-1 font-semibold"
+                      className="text-[#A8577F] hover:underline flex items-center gap-1 font-semibold shrink-0"
                     >
                       <RotateCcw className="w-3 h-3" />
                       Restablecer iniciales
@@ -350,7 +478,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           key={prod.id}
                           className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FAF7F5] border border-stone-200 hover:border-stone-300 transition-all gap-4"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <div className="w-14 h-14 rounded-xl overflow-hidden bg-stone-200 shrink-0">
                               {firstImg ? (
                                 <img
@@ -363,16 +491,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                                 <ImageIcon className="w-6 h-6 m-auto text-stone-400" />
                               )}
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <h4 className="text-sm font-bold text-stone-900">{prod.nombre}</h4>
+                                <h4 className="text-sm font-bold text-stone-900 truncate">{prod.nombre}</h4>
                                 {prod.destacado && (
-                                  <span className="text-[10px] bg-[#A8577F] text-white px-2 py-0.5 rounded-full font-bold">
+                                  <span className="text-[10px] bg-[#A8577F] text-white px-2 py-0.5 rounded-full font-bold shrink-0">
                                     Destacado
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-stone-500">
+                              <p className="text-xs text-stone-500 truncate">
                                 {prod.categoria} · {prod.variantesColor.length} colores · {prod.precio ? `$${prod.precio.toLocaleString('es-CO')} COP` : 'Sin precio'}
                               </p>
                               {/* Swatches preview */}
@@ -380,7 +508,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                                 {prod.variantesColor.map((v, i) => (
                                   <span
                                     key={i}
-                                    className="w-3 h-3 rounded-full border border-stone-300 inline-block"
+                                    className="w-3 h-3 rounded-full border border-stone-300 inline-block shrink-0"
                                     style={{ backgroundColor: v.colorHex }}
                                     title={v.color}
                                   />
@@ -389,11 +517,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={() => handleStartEdit(prod)}
-                              className="p-2 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition-colors"
+                              disabled={isPublishing}
+                              className="p-2 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-200 transition-colors disabled:opacity-50"
                               title="Editar producto"
                             >
                               <Edit className="w-4 h-4" />
@@ -401,7 +530,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleDeleteProduct(prod.id)}
-                              className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              disabled={isPublishing}
+                              className="p-2 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                               title="Eliminar producto"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -414,7 +544,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: PRODUCT EDITOR FORM */}
+              {/* TAB 2: EDITOR DE PRODUCTO */}
               {activeTab === 'editor' && editingProduct && (
                 <form onSubmit={handleSaveProductForm} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -626,35 +756,44 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   <div className="pt-4 border-t border-stone-200 flex items-center justify-end gap-3">
                     <button
                       type="button"
+                      disabled={isPublishing}
                       onClick={() => setActiveTab('lista')}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors"
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors disabled:opacity-50"
                     >
                       Cancelar
                     </button>
 
                     <button
                       type="submit"
-                      className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors flex items-center gap-1.5"
+                      disabled={isPublishing}
+                      className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
                     >
-                      <Save className="w-4 h-4" />
-                      <span>Guardar Cambios</span>
+                      {isPublishing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Publicando a Vercel...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Guardar y Publicar a Vercel</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
               )}
 
-              {/* TAB 3: GITHUB & VERCEL PERMANENT EXPORT INSTRUCTIONS */}
-              {activeTab === 'github' && (
+              {/* TAB 3: RESPALDO MANUAL */}
+              {activeTab === 'respaldo' && (
                 <div className="space-y-6 text-stone-800">
                   <div className="bg-[#FAF0F4] p-5 rounded-2xl border border-[#F4B8CC]/60 space-y-2">
                     <h3 className="text-sm font-bold text-[#8C3D65] flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#A8577F]" />
-                      Cómo guardar los cambios de forma permanente en Vercel
+                      Respaldo Manual / Exportación de Archivos
                     </h3>
                     <p className="text-xs text-stone-600 leading-relaxed">
-                      Como tu sitio no usa una base de datos de pago y se despliega gratis en Vercel, 
-                      los cambios que editas aquí quedan guardados de forma inmediata en tu navegador. 
-                      Para que los clientes de todo el mundo vean los productos nuevos, solo debes actualizar el archivo de datos en tu repositorio de GitHub:
+                      Si aún no has configurado las variables de entorno en Vercel o deseas tener una copia de seguridad física de tus productos, puedes descargar el archivo JSON o copiar el código fuente de TypeScript.
                     </p>
                   </div>
 
@@ -665,9 +804,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         1
                       </span>
                       <div>
-                        <h4 className="font-bold text-stone-900">Descarga o copia los datos actualizados</h4>
+                        <h4 className="font-bold text-stone-900">Descarga o copia los datos</h4>
                         <p className="text-stone-600 mt-0.5">
-                          Usa los botones de abajo para descargar el archivo <code className="bg-stone-200 px-1 rounded">products.json</code> o copiar el código para <code className="bg-stone-200 px-1 rounded">src/data/products.ts</code>.
+                          Usa los botones de abajo para descargar <code className="bg-stone-200 px-1 rounded">products.json</code> o copiar el código de <code className="bg-stone-200 px-1 rounded">src/data/products.ts</code>.
                         </p>
                       </div>
                     </div>
@@ -679,7 +818,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       <div>
                         <h4 className="font-bold text-stone-900">Ve a tu repositorio en GitHub</h4>
                         <p className="text-stone-600 mt-0.5">
-                          Abre tu GitHub, entra a la carpeta <code className="bg-stone-200 px-1 rounded">src/data/products.ts</code> (o <code className="bg-stone-200 px-1 rounded">src/data/products.json</code>) y dale clic al lápiz para editar.
+                          Entra a <a href="https://github.com/Jonathanz7/Zuniforme" target="_blank" rel="noopener noreferrer" className="text-[#A8577F] underline font-semibold">Jonathanz7/Zuniforme</a>, abre el archivo <code className="bg-stone-200 px-1 rounded">src/data/products.ts</code> y haz clic en el icono del lápiz para editarlo.
                         </p>
                       </div>
                     </div>
@@ -689,9 +828,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         3
                       </span>
                       <div>
-                        <h4 className="font-bold text-stone-900">Pega el contenido y haz Commit</h4>
+                        <h4 className="font-bold text-stone-900">Pega el contenido y confirma el Commit</h4>
                         <p className="text-stone-600 mt-0.5">
-                          Guarda el commit en la rama principal (main). Vercel reconstruirá tu sitio en 30 segundos automáticamente y los nuevos productos estarán en línea de inmediato.
+                          Guarda el commit en la rama <code>main</code>. Vercel reconstruirá tu sitio automáticamente.
                         </p>
                       </div>
                     </div>

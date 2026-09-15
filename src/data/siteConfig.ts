@@ -6,8 +6,8 @@ export const siteConfig: SiteConfig = {
   ciudad: 'Neiva',
   departamento: 'Huila',
   pais: 'Colombia',
-  whatsappNumero: '573167402891', // Default contact number
-  whatsappFormatoDisplay: '+57 316 740 2891',
+  whatsappNumero: '573228539863', // Default contact number
+  whatsappFormatoDisplay: '+57 322 853 9863',
   instagramUsuario: 'zuniforme',
   instagramUrl: 'https://instagram.com/zuniforme',
   emailContacto: 'contacto@zuniforme.com',

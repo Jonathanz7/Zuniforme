@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -5,7 +6,32 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: 'api-serverless-dev-middleware',
+        configureServer(server) {
+          server.middlewares.use(async (req, res, next) => {
+            if (req.url && (req.url === '/api/update-catalog' || req.url.startsWith('/api/update-catalog?'))) {
+              try {
+                const handlerMod = await server.ssrLoadModule('/api/update-catalog.ts');
+                await handlerMod.default(req, res);
+              } catch (err: any) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: err?.message || 'Error en endpoint dev /api/update-catalog' 
+                }));
+              }
+              return;
+            }
+            next();
+          });
+        },
+      },
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

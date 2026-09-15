@@ -82,20 +82,28 @@ Abre tu navegador en `http://localhost:3000` (o la dirección que indique la ter
 
 Tienes **dos formas muy sencillas** de hacerlo sin pagar bases de datos:
 
-### Método A: Desde el Modo Administrador Visual en la propia web (Recomendado)
-1. Entra a tu sitio web y haz clic en el icono de tuerca en la barra superior o en el enlace **"Modo Administrador"** en el pie de página (o agrega `#admin` al final de la URL, por ejemplo `tudominio.com/#admin`).
-2. Ingresa la contraseña: **`zuniforme`**.
-3. Desde allí podrás:
-   - Crear nuevos uniformes con su nombre, tela, precio y descripción.
-   - Añadir variantes de color con su código de color (swatch) y fotos.
-   - Subir fotos desde tu computador o pegar enlaces de imágenes.
-   - Guardar y ver el cambio en tu pantalla de inmediato.
-4. Para que el cambio quede permanente para todos los visitantes en Internet:
-   - Haz clic en la pestaña **"Guardar Permanente en GitHub / Vercel"**.
-   - Haz clic en **"Descargar products.json"** o **"Copiar código para src/data/products.ts"**.
-   - Sigue los 3 pasos que se explican abajo para actualizar tu repositorio en GitHub.
+### Método A: Publicación Automática Segura vía Función Serverless en Vercel (¡Recomendado!)
+1. Despliega tu repositorio en **Vercel**.
+2. En tu proyecto de Vercel, entra a **Settings** → **Environment Variables** y agrega las variables requeridas (ver listado más abajo).
+3. Entra a tu sitio web y abre el panel de administración (icono de tuerca en la barra superior o en el enlace **"Modo Administrador"** en el pie de página).
+4. Ingresa tu contraseña (la misma configurada en `ADMIN_PASSWORD`).
+5. Cada vez que agregues, edites o elimines una prenda y presiones **"Guardar y Publicar a Vercel"**, la app llamará a la función serverless segura (`/api/update-catalog`), la cual se autentica en el servidor y crea el commit en GitHub.
+6. Vercel detectará el commit y compilará la versión actualizada de tu tienda en menos de un minuto.
+7. **Seguridad Total:** El token de GitHub vive **exclusivamente en Vercel**, jamás en el navegador ni en el código público.
 
-### Método B: Editando directamente el archivo de código
+### Variables de Entorno a Configurar en Vercel:
+En tu panel de Vercel (**Project → Settings → Environment Variables**), agrega:
+- `ADMIN_PASSWORD`: Tu contraseña secreta para acceder y publicar cambios (ej: tu propia clave).
+- `GITHUB_TOKEN`: Tu Personal Access Token de GitHub (con permiso *Contents: Read and write* sobre el repo).
+- `GITHUB_OWNER`: `Jonathanz7` (o tu usuario/organización de GitHub).
+- `GITHUB_REPO`: `Zuniforme` (nombre exacto del repositorio).
+- `GITHUB_BRANCH`: `main`
+- `GITHUB_FILE_PATH`: `src/data/products.ts`
+
+### Método B: Respaldo Manual (Descarga / Copia de Código)
+Si aún no has configurado las variables en Vercel o quieres una copia de seguridad física, entra a la pestaña **"Respaldo Manual"** en el administrador para descargar `products.json` o copiar el código para `src/data/products.ts`.
+
+### Método C: Editando directamente el archivo de código
 Abre el archivo `src/data/products.ts` en cualquier editor de texto (como VS Code). Verás una lista de productos con esta estructura:
 
 ```typescript
@@ -145,8 +153,8 @@ export const siteConfig = {
   nombreMarca: 'ZUniforme',
   ciudad: 'Neiva',
   departamento: 'Huila',
-  whatsappNumero: '573167402891',         // Código de Colombia 57 + tu celular sin espacios ni signos
-  whatsappFormatoDisplay: '+57 316 740 2891',
+  whatsappNumero: '573228539863',         // Código de Colombia 57 + tu celular sin espacios ni signos
+  whatsappFormatoDisplay: '+57 322 853 9863',
   instagramUsuario: 'zuniforme',
   instagramUrl: 'https://instagram.com/zuniforme',
   direccionLocal: 'Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia',
