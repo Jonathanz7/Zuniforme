@@ -2,5 +2,7 @@
   "name": "ZUniforme - Catálogo de Uniformes y Ropa de Trabajo",
   "description": "Catálogo web moderno y profesional de uniformes antifluidos y ropa de trabajo para el sector salud y empresas, por ZUniforme (Neiva, Huila).",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

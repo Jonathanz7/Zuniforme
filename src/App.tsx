@@ -53,7 +53,10 @@ export default function App() {
 
       <main className="flex-grow">
         {/* Hero Showcase */}
-        <Hero />
+        <Hero
+          featuredProduct={products.find((p) => p.destacado) || products[0]}
+          onSelectProduct={handleSelectProduct}
+        />
 
         {/* Catalog Section */}
         <Catalog

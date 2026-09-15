@@ -1,9 +1,31 @@
-import React from 'react';
-import { ArrowRight, ShieldCheck, Sparkles, Scissors, MapPin, MessageCircle } from 'lucide-react';
-import { createWhatsAppLink, createGeneralWhatsAppMessage } from '../utils/formatters';
+import React, { useState } from 'react';
+import { ArrowRight, ShieldCheck, Sparkles, Scissors, MapPin, MessageCircle, Eye } from 'lucide-react';
+import { createWhatsAppLink, createGeneralWhatsAppMessage, formatCOP } from '../utils/formatters';
+import { Product } from '../types';
+import { initialProducts } from '../data/products';
 
-export const Hero: React.FC = () => {
+interface HeroProps {
+  featuredProduct?: Product;
+  onSelectProduct?: (product: Product, initialColorName?: string) => void;
+}
+
+export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) => {
   const waLink = createWhatsAppLink(createGeneralWhatsAppMessage());
+
+  // Use the provided product or fallback to the first initial product
+  const product = featuredProduct || initialProducts[0];
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+
+  // Safe index in case variants array changed
+  const safeVariantIndex =
+    product?.variantesColor && selectedVariantIndex < product.variantesColor.length
+      ? selectedVariantIndex
+      : 0;
+
+  const currentVariant = product?.variantesColor?.[safeVariantIndex];
+  const displayImage =
+    currentVariant?.imagenes?.[0] ||
+    'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop';
 
   return (
     <section id="inicio" className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
@@ -110,39 +132,118 @@ export const Hero: React.FC = () => {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               
-              {/* Main Photo Card */}
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-stone-100">
+              {/* Main Photo Card - Clickable to open full detail modal */}
+              <div 
+                onClick={() => onSelectProduct?.(product, currentVariant?.color)}
+                className="group relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-stone-100 cursor-pointer transition-transform duration-300 hover:shadow-2xl"
+              >
                 <img
-                  src="https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-                  alt="Doctora vistiendo uniforme antifluido ZUniforme"
-                  className="w-full h-full object-cover object-center"
+                  src={displayImage}
+                  alt={`${product?.nombre || 'Conjunto Aura'} en color ${currentVariant?.color || 'Mauve'}`}
+                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                   loading="eager"
                   referrerPolicy="no-referrer"
                 />
 
                 {/* Subtle gradient overlay at bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
-                {/* Overlaid Card Info */}
-                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white/60 shadow-lg">
-                  <div className="flex items-center justify-between">
+                {/* Top Badge on Image */}
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#A8577F] text-white shadow-md">
+                    <Sparkles className="w-3 h-3" />
+                    Producto Estrella
+                  </span>
+                </div>
+
+                {/* Hover Quick Action Indicator */}
+                <div className="absolute inset-0 bg-stone-900/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                  <span className="px-4 py-2 rounded-full bg-white/95 backdrop-blur-md text-stone-900 text-xs font-bold shadow-lg flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-[#A8577F]" />
+                    <span>Ver detalles y comprar</span>
+                  </span>
+                </div>
+
+                {/* Overlaid Card Info with Interactive Swatches */}
+                <div 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-white/60 shadow-lg"
+                >
+                  <div className="flex items-start justify-between gap-2">
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#FCE8EF] text-[#8C3D65]">
                         Colección Signature
                       </span>
-                      <h3 className="text-sm font-bold text-stone-900 mt-1">Conjunto Aura · Color Mauve</h3>
+                      <h3 
+                        onClick={() => onSelectProduct?.(product, currentVariant?.color)}
+                        className="text-sm font-bold text-stone-900 mt-1 cursor-pointer hover:text-[#A8577F] transition-colors"
+                      >
+                        {product?.nombre || 'Conjunto Aura'}
+                      </h3>
                     </div>
-                    <span className="text-sm font-extrabold text-[#A8577F]">$135.000 COP</span>
+                    <span className="text-sm font-extrabold text-[#A8577F] shrink-0">
+                      {product?.precio ? formatCOP(product.precio) : '$135.000 COP'}
+                    </span>
                   </div>
                   
-                  {/* Swatches teaser */}
-                  <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-stone-100">
-                    <span className="text-[11px] text-stone-500 mr-1">Colores:</span>
-                    <span className="w-3.5 h-3.5 rounded-full border border-stone-300" style={{ background: '#A8577F' }} title="Mauve" />
-                    <span className="w-3.5 h-3.5 rounded-full border border-stone-300" style={{ background: '#F4B8CC' }} title="Rosa Empolvado" />
-                    <span className="w-3.5 h-3.5 rounded-full border border-stone-300" style={{ background: '#1F4E5B' }} title="Azul Petróleo" />
-                    <span className="w-3.5 h-3.5 rounded-full border border-stone-300" style={{ background: '#7D9D8B' }} title="Verde Salvia" />
-                    <span className="text-[10px] text-[#A8577F] font-semibold ml-auto">+ más en catálogo</span>
+                  {/* Interactive Swatches - Change photo live */}
+                  <div className="mt-3 pt-2.5 border-t border-stone-100">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-[11px] text-stone-500 font-medium">
+                        Color:{' '}
+                        <strong className="text-stone-800 font-semibold">
+                          {currentVariant?.color || 'Mauve ZUniforme'}
+                        </strong>
+                      </span>
+                      <a 
+                        href="#catalogo" 
+                        className="text-[10px] text-[#A8577F] font-semibold hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver en catálogo ↓
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {product?.variantesColor && product.variantesColor.length > 0 ? (
+                        product.variantesColor.map((variant, idx) => {
+                          const isActive = idx === safeVariantIndex;
+                          return (
+                            <button
+                              key={`${variant.color}-${idx}`}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVariantIndex(idx);
+                              }}
+                              className={`w-6 h-6 rounded-full transition-all relative flex items-center justify-center cursor-pointer ${
+                                isActive
+                                  ? 'ring-2 ring-offset-2 ring-[#A8577F] scale-110 shadow-sm'
+                                  : 'hover:scale-105 opacity-85 hover:opacity-100'
+                              }`}
+                              style={{
+                                backgroundColor: variant.colorHex,
+                                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+                              }}
+                              title={`Seleccionar color ${variant.color}`}
+                              aria-label={`Seleccionar color ${variant.color}`}
+                            >
+                              {isActive && (
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{
+                                    backgroundColor:
+                                      variant.colorHex?.toLowerCase() === '#ffffff' ? '#333' : '#fff',
+                                  }}
+                                />
+                              )}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <span className="text-[11px] text-stone-400">Variantes disponibles</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,13 +1,21 @@
 import { Product } from '../types';
 import { initialProducts } from '../data/products';
 
-const STORAGE_KEY = 'zuniforme_catalog_products_v1';
+const STORAGE_KEY = 'zuniforme_catalog_products_v2';
 
 export function getStoredProducts(): Product[] {
   if (typeof window === 'undefined') return initialProducts;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return initialProducts;
+    if (!raw) {
+      // Clear legacy storage key so newly coded products and images load fresh
+      try {
+        localStorage.removeItem('zuniforme_catalog_products_v1');
+      } catch {
+        // ignore
+      }
+      return initialProducts;
+    }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed;
