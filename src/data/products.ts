@@ -42,7 +42,7 @@ export const initialProducts: Product[] = [
     "nombre": "Conjunto Alma",
     "categoria": "Uniformes Quirúrgicos",
     "descripcion": "Conjunto femenino de diseño moderno compuesto por blusa sin mangas con cuello alto y cierre frontal, y pantalón tipo jogger con pretina elástica y bolsillos cargo. Diseñado para brindar comodidad, libertad de movimiento y funcionalidad durante jornadas profesionales.",
-    "precio": 999999,
+    "precio": 140000,
     "tallas": [
       "XS",
       "S",
