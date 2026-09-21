@@ -33,6 +33,9 @@ export interface SiteConfig {
   emailContacto: string;
   direccionLocal: string;
   horarioAtencion: string;
+  // Fotografías de secciones del sitio web
+  imagenNuestraHistoria?: string;
+  imagenHero?: string;
 }
 
 export interface FilterState {

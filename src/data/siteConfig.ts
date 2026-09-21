@@ -12,7 +12,9 @@ export const siteConfig: SiteConfig = {
   instagramUrl: 'https://instagram.com/zuniforme',
   emailContacto: 'contacto@zuniforme.com',
   direccionLocal: 'Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia',
-  horarioAtencion: 'Lunes a Sábado: 8:00 AM - 6:30 PM'
+  horarioAtencion: 'Lunes a Sábado: 8:00 AM - 6:30 PM',
+  imagenNuestraHistoria: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop',
+  imagenHero: 'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop'
 };
 
 export const BRAND_COLORS = {

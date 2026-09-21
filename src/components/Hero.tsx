@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { ArrowRight, ShieldCheck, Sparkles, Scissors, MapPin, MessageCircle, Eye } from 'lucide-react';
 import { createWhatsAppLink, createGeneralWhatsAppMessage, formatCOP } from '../utils/formatters';
-import { Product } from '../types';
+import { Product, SiteConfig } from '../types';
 import { initialProducts } from '../data/products';
+import { siteConfig as defaultSiteConfig } from '../data/siteConfig';
 
 interface HeroProps {
   featuredProduct?: Product;
   onSelectProduct?: (product: Product, initialColorName?: string) => void;
+  siteConfig?: SiteConfig;
 }
 
-export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) => {
+export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, siteConfig = defaultSiteConfig }) => {
   const waLink = createWhatsAppLink(createGeneralWhatsAppMessage());
 
   // Use the provided product or fallback to the first initial product
   const product = featuredProduct || initialProducts[0];
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [userSelectedVariant, setUserSelectedVariant] = useState(false);
 
   // Safe index in case variants array changed
   const safeVariantIndex =
@@ -24,8 +27,12 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
 
   const currentVariant = product?.variantesColor?.[safeVariantIndex];
   const displayImage =
-    currentVariant?.imagenes?.[0] ||
-    'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop';
+    userSelectedVariant && currentVariant?.imagenes?.[0]
+      ? currentVariant.imagenes[0]
+      : (siteConfig?.imagenHero ||
+         defaultSiteConfig.imagenHero ||
+         currentVariant?.imagenes?.[0] ||
+         'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop');
 
   return (
     <section id="inicio" className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
@@ -215,6 +222,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct }) 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedVariantIndex(idx);
+                                setUserSelectedVariant(true);
                               }}
                               className={`w-6 h-6 rounded-full transition-all relative flex items-center justify-center cursor-pointer ${
                                 isActive

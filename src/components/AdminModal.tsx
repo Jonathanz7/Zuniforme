@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Product, ColorVariant } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Product, ColorVariant, SiteConfig } from '../types';
 import { CATEGORIES } from '../data/products';
+import { siteConfig as defaultSiteConfig } from '../data/siteConfig';
 import { 
   downloadProductsJSON, 
   generateProductsTypeScriptCode, 
@@ -12,7 +13,7 @@ import {
   RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
   AlertCircle, CheckCircle2, Loader2, ShieldCheck,
   ExternalLink, Server, CloudUpload, ArrowLeft, ArrowRight,
-  Link as LinkIcon
+  Link as LinkIcon, ChevronUp, ChevronDown
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -20,6 +21,8 @@ interface AdminModalProps {
   onClose: () => void;
   products: Product[];
   onSaveProducts: (products: Product[]) => void;
+  siteConfig?: SiteConfig;
+  onSaveSiteConfig?: (config: SiteConfig) => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
@@ -27,20 +30,37 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onClose,
   products,
   onSaveProducts,
+  siteConfig = defaultSiteConfig,
+  onSaveSiteConfig,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'lista' | 'editor' | 'respaldo'>('lista');
+  const [activeTab, setActiveTab] = useState<'lista' | 'editor' | 'contenido' | 'respaldo'>('lista');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [customTallaInput, setCustomTallaInput] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<{ variantIdx: number; photoIdx: number } | null>(null);
   const [uploadStatusText, setUploadStatusText] = useState<string>('');
   const [isMigratingBase64, setIsMigratingBase64] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState<{ current: number; total: number; percent: number } | null>(null);
+
+  // Estado para Contenido del Sitio (siteConfig)
+  const [localSiteConfig, setLocalSiteConfig] = useState<SiteConfig>(() => siteConfig || defaultSiteConfig);
+  const [isPublishingSiteContent, setIsPublishingSiteContent] = useState(false);
+  const [uploadingSiteField, setUploadingSiteField] = useState<'imagenNuestraHistoria' | 'imagenHero' | null>(null);
+  const [siteUploadStatusText, setSiteUploadStatusText] = useState<string>('');
+
+  // Sincronizar localSiteConfig cuando cambie la prop
+  useEffect(() => {
+    if (siteConfig) {
+      setLocalSiteConfig(siteConfig);
+    }
+  }, [siteConfig]);
+
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
@@ -176,6 +196,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         }
       });
     }
+    // Garantizar array de especificaciones/caracteristicas
+    if (!Array.isArray(cloned.caracteristicas)) {
+      cloned.caracteristicas = [];
+    }
+    // Garantizar array de tallas
+    if (!Array.isArray(cloned.tallas) || cloned.tallas.length === 0) {
+      cloned.tallas = ['XS', 'S', 'M', 'L', 'XL'];
+    }
+    // Garantizar género
+    if (!cloned.genero) {
+      cloned.genero = 'Femenino';
+    }
     setEditingProduct(cloned);
     setActiveTab('editor');
   };
@@ -205,14 +237,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
-    const index = products.findIndex(p => p.id === editingProduct.id);
+    // Sanitizar caracteristicas eliminando líneas vacías y tallas
+    const sanitizedProduct: Product = {
+      ...editingProduct,
+      caracteristicas: (editingProduct.caracteristicas || [])
+        .map(c => c.trim())
+        .filter(Boolean),
+      tallas: editingProduct.tallas && editingProduct.tallas.length > 0
+        ? editingProduct.tallas
+        : ['XS', 'S', 'M', 'L', 'XL'],
+    };
+
+    const index = products.findIndex(p => p.id === sanitizedProduct.id);
     const isNew = index < 0;
     let updatedList: Product[];
     if (!isNew) {
       updatedList = [...products];
-      updatedList[index] = editingProduct;
+      updatedList[index] = sanitizedProduct;
     } else {
-      updatedList = [editingProduct, ...products];
+      updatedList = [sanitizedProduct, ...products];
     }
 
     // 1. Guardar de inmediato en memoria y localStorage del navegador
@@ -226,6 +269,84 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleManualSyncNow = async () => {
     await publishToVercel(products);
+  };
+
+  // Ayudantes para Especificaciones & Ventajas (caracteristicas)
+  const handleAddCaracteristica = () => {
+    if (!editingProduct) return;
+    const current = editingProduct.caracteristicas || [];
+    setEditingProduct({
+      ...editingProduct,
+      caracteristicas: [...current, ''],
+    });
+  };
+
+  const handleUpdateCaracteristica = (idx: number, text: string) => {
+    if (!editingProduct) return;
+    const current = [...(editingProduct.caracteristicas || [])];
+    current[idx] = text;
+    setEditingProduct({
+      ...editingProduct,
+      caracteristicas: current,
+    });
+  };
+
+  const handleRemoveCaracteristica = (idx: number) => {
+    if (!editingProduct) return;
+    const current = (editingProduct.caracteristicas || []).filter((_, i) => i !== idx);
+    setEditingProduct({
+      ...editingProduct,
+      caracteristicas: current,
+    });
+  };
+
+  const handleMoveCaracteristica = (idx: number, direction: 'up' | 'down') => {
+    if (!editingProduct) return;
+    const current = [...(editingProduct.caracteristicas || [])];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= current.length) return;
+
+    const temp = current[idx];
+    current[idx] = current[targetIdx];
+    current[targetIdx] = temp;
+
+    setEditingProduct({
+      ...editingProduct,
+      caracteristicas: current,
+    });
+  };
+
+  // Ayudantes para Tallas
+  const handleToggleTalla = (talla: string) => {
+    if (!editingProduct) return;
+    const current = editingProduct.tallas || [];
+    let updated: string[];
+    if (current.includes(talla)) {
+      if (current.length <= 1) {
+        alert('El producto debe tener al menos una talla disponible');
+        return;
+      }
+      updated = current.filter(t => t !== talla);
+    } else {
+      updated = [...current, talla];
+    }
+    setEditingProduct({
+      ...editingProduct,
+      tallas: updated,
+    });
+  };
+
+  const handleAddCustomTalla = () => {
+    if (!editingProduct || !customTallaInput.trim()) return;
+    const trimmed = customTallaInput.trim().toUpperCase();
+    const current = editingProduct.tallas || [];
+    if (!current.includes(trimmed)) {
+      setEditingProduct({
+        ...editingProduct,
+        tallas: [...current, trimmed],
+      });
+    }
+    setCustomTallaInput('');
   };
 
   // Ayudantes para variantes de color
@@ -397,6 +518,150 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } finally {
       setUploadingSlot(null);
       setUploadStatusText('');
+    }
+  };
+
+  /**
+   * Sube una foto de sección del sitio (siteConfig) a Vercel Blob usando api/upload-image.
+   */
+  const handleSiteImageUpload = async (field: 'imagenNuestraHistoria' | 'imagenHero', file: File) => {
+    const password = adminPassword || passwordInput.trim();
+    if (!password) {
+      showNotification('Ingresa tu contraseña de administrador para subir imágenes a Vercel Blob.', 'error');
+      return;
+    }
+
+    setUploadingSiteField(field);
+    setSiteUploadStatusText('Comprimiendo imagen (máx 1600px)...');
+
+    try {
+      // 1. Comprimir en cliente con Canvas
+      const compressed = await compressAndResizeImage(file, 1600, 0.82);
+      const kbSize = Math.round(compressed.compressedSize / 1024);
+      setSiteUploadStatusText(`Subiendo a Vercel Blob (${kbSize} KB)...`);
+
+      // 2. Subir imagen individual a api/upload-image
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminPassword: password,
+          filename: `site-${field}-${cleanFileName}`,
+          image: compressed.dataUrl,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || `Error HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // 3. Asignar la URL permanente retornada por Vercel Blob
+      const newImageUrl = data.url;
+      const updatedConfig: SiteConfig = {
+        ...localSiteConfig,
+        [field]: newImageUrl,
+      };
+
+      setLocalSiteConfig(updatedConfig);
+      onSaveSiteConfig?.(updatedConfig);
+
+      showNotification(
+        `✅ Foto de sección optimizada (-${compressed.reductionPercentage}%) y subida a Vercel Blob. Haz clic en "Guardar y Publicar" para confirmarla en GitHub.`,
+        'success'
+      );
+    } catch (err: any) {
+      console.error('Error al subir imagen de sección:', err);
+      showNotification(
+        `Error al subir imagen: ${err?.message || 'Fallo desconocido'}`,
+        'error'
+      );
+    } finally {
+      setUploadingSiteField(null);
+      setSiteUploadStatusText('');
+    }
+  };
+
+  /**
+   * Cambia manualmente la URL de una foto de sección.
+   */
+  const handleManualSiteImageUrlChange = (field: 'imagenNuestraHistoria' | 'imagenHero', url: string) => {
+    if (!url.trim()) return;
+    const updatedConfig: SiteConfig = {
+      ...localSiteConfig,
+      [field]: url.trim(),
+    };
+    setLocalSiteConfig(updatedConfig);
+    onSaveSiteConfig?.(updatedConfig);
+    showNotification('URL de imagen actualizada. Presiona "Guardar y Publicar" para enviar el cambio a GitHub.', 'info');
+  };
+
+  /**
+   * Restaura la foto de sección a su valor original por defecto.
+   */
+  const handleResetSiteImage = (field: 'imagenNuestraHistoria' | 'imagenHero') => {
+    const defaultUrl = defaultSiteConfig[field] || '';
+    const updatedConfig: SiteConfig = {
+      ...localSiteConfig,
+      [field]: defaultUrl,
+    };
+    setLocalSiteConfig(updatedConfig);
+    onSaveSiteConfig?.(updatedConfig);
+    showNotification('Foto de sección restaurada al valor original. Presiona "Guardar y Publicar" para enviar a GitHub.', 'info');
+  };
+
+  /**
+   * Envía los cambios de siteConfig.ts al endpoint serverless seguro (/api/update-site-content)
+   * para generar un commit real en GitHub sin exponer tokens en el navegador.
+   */
+  const publishSiteContentToGitHub = async (configToPublish: SiteConfig): Promise<boolean> => {
+    setIsPublishingSiteContent(true);
+    showNotification('Guardando cambios en siteConfig.ts y publicando en GitHub...', 'info');
+
+    try {
+      const password = adminPassword || passwordInput.trim();
+      if (!password) {
+        showNotification('Ingresa tu contraseña de administrador para publicar cambios.', 'error');
+        setIsPublishingSiteContent(false);
+        return false;
+      }
+
+      const response = await fetch('/api/update-site-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminPassword: password,
+          siteConfig: configToPublish,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || `Error HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      showNotification(
+        data.message || '✅ Cambios de contenido publicados en GitHub, tu web se actualizará en breve.',
+        'success',
+        data.commitUrl
+      );
+      return true;
+    } catch (err: any) {
+      console.error('Error al publicar contenido del sitio a GitHub:', err);
+      showNotification(
+        `Error al guardar en GitHub: ${err?.message || 'Error de conexión'}`,
+        'error'
+      );
+      return false;
+    } finally {
+      setIsPublishingSiteContent(false);
     }
   };
 
@@ -673,6 +938,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </button>
                 )}
 
+                {/* TAB: Contenido del Sitio */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('contenido')}
+                  className={`px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                    activeTab === 'contenido'
+                      ? 'border-[#A8577F] text-[#A8577F]'
+                      : 'border-transparent text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Contenido del Sitio</span>
+                </button>
+
                 {/* TAB: Respaldo manual */}
                 <button
                   type="button"
@@ -713,6 +992,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   >
                     <Plus className="w-4 h-4" />
                     <span>Nuevo Producto</span>
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'contenido' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => publishSiteContentToGitHub(localSiteConfig)}
+                    disabled={isPublishingSiteContent}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shrink-0 disabled:opacity-50 shadow-sm"
+                    title="Guarda y publica las fotos de secciones a GitHub"
+                  >
+                    {isPublishingSiteContent ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Server className="w-3.5 h-3.5" />
+                    )}
+                    <span>Guardar y Publicar</span>
                   </button>
                 </div>
               )}
@@ -863,7 +1161,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               {activeTab === 'editor' && editingProduct && (
                 <form onSubmit={handleSaveProductForm} className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
                         Nombre del producto *
                       </label>
@@ -889,6 +1187,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         {CATEGORIES.filter(c => c !== 'Todos').map(c => (
                           <option key={c} value={c}>{c}</option>
                         ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                        Género / Silueta
+                      </label>
+                      <select
+                        value={editingProduct.genero || 'Femenino'}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, genero: e.target.value as any })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-sm focus:border-[#A8577F] focus:outline-none bg-white"
+                      >
+                        <option value="Femenino">Femenino (Dama)</option>
+                        <option value="Masculino">Masculino (Caballero)</option>
+                        <option value="Unisex">Unisex</option>
                       </select>
                     </div>
 
@@ -943,6 +1256,86 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       />
                       <span>Destacar este producto en la parte superior</span>
                     </label>
+                  </div>
+
+                  {/* Tallas Disponibles Section */}
+                  <div className="pt-4 border-t border-stone-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">
+                          Tallas Disponibles
+                        </label>
+                        <p className="text-[11px] text-stone-500">
+                          Selecciona las tallas que estarán disponibles para esta prenda.
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-[#A8577F] font-bold bg-[#FCE8EF] px-2.5 py-0.5 rounded-full">
+                        {editingProduct.tallas?.length || 0} seleccionadas
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Ajustable'].map((talla) => {
+                        const isSelected = (editingProduct.tallas || []).includes(talla);
+                        return (
+                          <button
+                            key={talla}
+                            type="button"
+                            onClick={() => handleToggleTalla(talla)}
+                            className={`min-w-11 h-9 px-3.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                                : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#F4B8CC]" />}
+                            <span>{talla}</span>
+                          </button>
+                        );
+                      })}
+
+                      {/* Tallas personalizadas adicionales si hay alguna */}
+                      {(editingProduct.tallas || [])
+                        .filter(t => !['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Ajustable'].includes(t))
+                        .map((customTalla) => (
+                          <button
+                            key={customTalla}
+                            type="button"
+                            onClick={() => handleToggleTalla(customTalla)}
+                            className="h-9 px-3.5 rounded-xl border border-stone-900 bg-stone-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                            title="Haz clic para remover esta talla"
+                          >
+                            <Check className="w-3.5 h-3.5 text-[#F4B8CC]" />
+                            <span>{customTalla}</span>
+                            <X className="w-3.5 h-3.5 text-stone-400 hover:text-red-400 ml-0.5" />
+                          </button>
+                        ))}
+
+                      {/* Input para agregar otra talla */}
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={customTallaInput}
+                          onChange={(e) => setCustomTallaInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddCustomTalla();
+                            }
+                          }}
+                          placeholder="Otra talla..."
+                          className="w-24 h-9 px-2.5 rounded-xl border border-stone-200 text-xs bg-white focus:border-[#A8577F] focus:outline-none uppercase"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCustomTalla}
+                          className="h-9 px-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors"
+                          title="Añadir talla personalizada"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Color Variants Section */}
@@ -1275,6 +1668,96 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     </div>
                   </div>
 
+                  {/* Especificaciones & Ventajas Section */}
+                  <div className="pt-4 border-t border-stone-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-stone-900">
+                          Especificaciones & Ventajas
+                        </h4>
+                        <p className="text-xs text-stone-500">
+                          Lista de características destacadas que se muestran con viñeta de check en la vista detallada de la prenda.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddCaracteristica}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ Añadir especificación</span>
+                      </button>
+                    </div>
+
+                    {(!editingProduct.caracteristicas || editingProduct.caracteristicas.length === 0) ? (
+                      <div className="p-4 rounded-xl border border-dashed border-stone-300 text-center bg-stone-50/50">
+                        <p className="text-xs text-stone-500">
+                          No hay especificaciones añadidas. Haz clic en <strong>"+ Añadir especificación"</strong> para agregar puntos clave como tela antifluido, bolsillos, secado rápido, etc.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {editingProduct.caracteristicas.map((carac, cIdx) => (
+                          <div
+                            key={cIdx}
+                            className="flex items-center gap-2 p-2 rounded-xl bg-[#FAF7F5] border border-stone-200 focus-within:border-[#A8577F] transition-all"
+                          >
+                            {/* Flechas para reordenar arriba / abajo */}
+                            <div className="flex flex-col gap-0.5 shrink-0">
+                              <button
+                                type="button"
+                                disabled={cIdx === 0}
+                                onClick={() => handleMoveCaracteristica(cIdx, 'up')}
+                                className="p-0.5 text-stone-400 hover:text-stone-700 disabled:opacity-20 disabled:hover:text-stone-400 transition-colors"
+                                title="Subir posición"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={cIdx === (editingProduct.caracteristicas?.length || 0) - 1}
+                                onClick={() => handleMoveCaracteristica(cIdx, 'down')}
+                                className="p-0.5 text-stone-400 hover:text-stone-700 disabled:opacity-20 disabled:hover:text-stone-400 transition-colors"
+                                title="Bajar posición"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Ícono de check idéntico al del modal público */}
+                            <div className="w-5 h-5 rounded-full bg-[#FCE8EF] text-[#A8577F] flex items-center justify-center shrink-0">
+                              <Check className="w-3 h-3" />
+                            </div>
+
+                            {/* Input de texto para la especificación */}
+                            <input
+                              type="text"
+                              value={carac}
+                              onChange={(e) => handleUpdateCaracteristica(cIdx, e.target.value)}
+                              placeholder="Ej: Repelencia certificada a fluidos corporales y salpicaduras"
+                              className="flex-grow px-3 py-1.5 rounded-lg border border-stone-200 text-xs bg-white focus:border-[#A8577F] focus:outline-none"
+                            />
+
+                            {/* Botón eliminar */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCaracteristica(cIdx)}
+                              className="p-1.5 text-stone-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors shrink-0"
+                              title="Eliminar especificación"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-[11px] text-stone-400 mt-2">
+                      💡 Usa las flechas para ordenar las ventajas. Se mostrarán exactamente en este orden en el detalle público del producto.
+                    </p>
+                  </div>
+
                   {/* Form buttons */}
                   <div className="pt-4 border-t border-stone-200 flex items-center justify-end gap-3">
                     <button
@@ -1305,6 +1788,399 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     </button>
                   </div>
                 </form>
+              )}
+
+              {/* TAB 4: CONTENIDO DEL SITIO (IMÁGENES DE SECCIONES) */}
+              {activeTab === 'contenido' && (
+                <div className="space-y-6">
+                  {/* Banner Explicativo */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F5] border border-stone-200 text-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="p-2.5 rounded-xl bg-[#FCE8EF] text-[#A8577F] shrink-0">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-stone-900">
+                          Fotografías de Secciones del Sitio Web
+                        </h4>
+                        <p className="text-xs text-stone-600 mt-1 leading-relaxed max-w-2xl">
+                          Aquí puedes actualizar las imágenes de fondo e identidad que se muestran fuera del catálogo de prendas (por ejemplo la de <strong>Nuestra Historia</strong> y la del <strong>Hero Principal</strong>). Las fotos se comprimen y suben a Vercel Blob, y al presionar <strong>Guardar y Publicar</strong> se genera un commit automático en <code>src/data/siteConfig.ts</code> en GitHub.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => publishSiteContentToGitHub(localSiteConfig)}
+                      disabled={isPublishingSiteContent}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shrink-0 disabled:opacity-50 shadow-sm"
+                    >
+                      {isPublishingSiteContent ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Server className="w-4 h-4" />
+                      )}
+                      <span>Guardar y Publicar en GitHub</span>
+                    </button>
+                  </div>
+
+                  {/* Grid de Secciones Editables */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    {/* SECCIÓN 1: FOTO NUESTRA HISTORIA */}
+                    <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FCE8EF] text-[#8C3D65]">
+                            Sección 1: Historia & Esencia
+                          </span>
+                          <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
+                            src/components/AboutSection.tsx
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-bold text-stone-900">
+                            Fotografía de "Nuestra Historia"
+                          </h4>
+                          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                            Foto grande que acompaña el relato del taller, junto a la insignia de <em>+5 Años Vistiendo a la salud</em> y <em>Pasión desde Neiva</em>.
+                          </p>
+                        </div>
+
+                        {/* Vista previa con proporción real de AboutSection (4:4.5) */}
+                        <div 
+                          className="relative aspect-[4/4.5] w-full rounded-2xl overflow-hidden bg-stone-100 border-2 border-stone-200 group"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleSiteImageUpload('imagenNuestraHistoria', e.dataTransfer.files[0]);
+                            }
+                          }}
+                        >
+                          <img
+                            src={localSiteConfig.imagenNuestraHistoria || defaultSiteConfig.imagenNuestraHistoria}
+                            alt="Previsualización Nuestra Historia"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+
+                          {/* Simulación insignia de historia */}
+                          <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-xl shadow-md border border-stone-200/80 pointer-events-none flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-[#FCE8EF] text-[#A8577F] flex items-center justify-center text-[10px] font-bold">
+                              ZU
+                            </span>
+                            <span className="text-[10px] font-bold text-stone-800">
+                              +5 Años Vistiendo a la salud
+                            </span>
+                          </div>
+
+                          {/* Estado de carga durante la subida */}
+                          {uploadingSiteField === 'imagenNuestraHistoria' && (
+                            <div className="absolute inset-0 bg-stone-900/75 flex flex-col items-center justify-center p-4 text-center text-white backdrop-blur-xs z-20">
+                              <Loader2 className="w-8 h-8 animate-spin text-[#F4B8CC] mb-2" />
+                              <p className="text-xs font-bold">{siteUploadStatusText || 'Subiendo imagen...'}</p>
+                            </div>
+                          )}
+
+                          {/* Overlay para arrastrar y soltar */}
+                          <div className="absolute inset-0 bg-[#A8577F]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center text-white pointer-events-none">
+                            <Upload className="w-8 h-8 mb-1.5" />
+                            <p className="text-xs font-bold">Arrastra una nueva imagen aquí</p>
+                            <p className="text-[10px] text-white/80">o usa el botón de abajo</p>
+                          </div>
+                        </div>
+
+                        {/* Fuente de la foto actual */}
+                        <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-2 text-[11px]">
+                          <div className="truncate text-stone-600 font-mono">
+                            {localSiteConfig.imagenNuestraHistoria?.includes('vercel-storage.com') ? (
+                              <span className="text-emerald-700 font-medium font-sans flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Guardada en Vercel Blob
+                              </span>
+                            ) : (
+                              <span className="text-stone-500 font-sans">
+                                Imagen externa / Unsplash
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (localSiteConfig.imagenNuestraHistoria) {
+                                  navigator.clipboard.writeText(localSiteConfig.imagenNuestraHistoria);
+                                  showNotification('URL copiada al portapapeles', 'info');
+                                }
+                              }}
+                              className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
+                              title="Copiar URL"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            {localSiteConfig.imagenNuestraHistoria && (
+                              <a
+                                href={localSiteConfig.imagenNuestraHistoria}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
+                                title="Abrir en pestaña nueva"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones de acción para Sección 1 */}
+                      <div className="mt-4 pt-3 border-t border-stone-100 flex flex-wrap items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Subir nueva foto</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleSiteImageUpload('imagenNuestraHistoria', e.target.files[0]);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = localSiteConfig.imagenNuestraHistoria || '';
+                            const url = window.prompt('Pega la URL directa de la imagen (https://...):', current);
+                            if (url !== null && url.trim()) {
+                              handleManualSiteImageUrlChange('imagenNuestraHistoria', url.trim());
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                        >
+                          <LinkIcon className="w-3.5 h-3.5" />
+                          <span>Pegar URL</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleResetSiteImage('imagenNuestraHistoria')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors ml-auto"
+                          title="Restaurar a la foto original"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span className="hidden sm:inline">Restaurar</span>
+                        </button>
+                      </div>
+                    </div>
+
+
+                    {/* SECCIÓN 2: FOTO HERO PRINCIPAL */}
+                    <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FCE8EF] text-[#8C3D65]">
+                            Sección 2: Portada de Bienvenida
+                          </span>
+                          <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
+                            src/components/Hero.tsx
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-bold text-stone-900">
+                            Fotografía Destacada del Hero Principal
+                          </h4>
+                          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                            Tarjeta visual principal en la cabecera superior. Es la primera imagen que contemplan los usuarios al ingresar a ZUniforme.
+                          </p>
+                        </div>
+
+                        {/* Vista previa con proporción real del Hero (4:5) */}
+                        <div 
+                          className="relative aspect-[4/4.5] w-full rounded-2xl overflow-hidden bg-stone-100 border-2 border-stone-200 group"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleSiteImageUpload('imagenHero', e.dataTransfer.files[0]);
+                            }
+                          }}
+                        >
+                          <img
+                            src={localSiteConfig.imagenHero || defaultSiteConfig.imagenHero}
+                            alt="Previsualización Hero Principal"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+
+                          {/* Simulación etiqueta de producto en Hero */}
+                          <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-xl shadow-md border border-stone-200/80 pointer-events-none flex items-center justify-between">
+                            <div>
+                              <span className="text-[9px] uppercase font-bold text-[#8C3D65]">Colección Signature</span>
+                              <p className="text-[11px] font-bold text-stone-800">Conjunto Aura Signature</p>
+                            </div>
+                            <span className="text-[11px] font-bold text-[#A8577F]">$135.000</span>
+                          </div>
+
+                          {/* Estado de carga durante la subida */}
+                          {uploadingSiteField === 'imagenHero' && (
+                            <div className="absolute inset-0 bg-stone-900/75 flex flex-col items-center justify-center p-4 text-center text-white backdrop-blur-xs z-20">
+                              <Loader2 className="w-8 h-8 animate-spin text-[#F4B8CC] mb-2" />
+                              <p className="text-xs font-bold">{siteUploadStatusText || 'Subiendo imagen...'}</p>
+                            </div>
+                          )}
+
+                          {/* Overlay para arrastrar y soltar */}
+                          <div className="absolute inset-0 bg-[#A8577F]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center text-white pointer-events-none">
+                            <Upload className="w-8 h-8 mb-1.5" />
+                            <p className="text-xs font-bold">Arrastra una nueva imagen aquí</p>
+                            <p className="text-[10px] text-white/80">o usa el botón de abajo</p>
+                          </div>
+                        </div>
+
+                        {/* Fuente de la foto actual */}
+                        <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-2 text-[11px]">
+                          <div className="truncate text-stone-600 font-mono">
+                            {localSiteConfig.imagenHero?.includes('vercel-storage.com') ? (
+                              <span className="text-emerald-700 font-medium font-sans flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Guardada en Vercel Blob
+                              </span>
+                            ) : (
+                              <span className="text-stone-500 font-sans">
+                                Imagen externa / Unsplash
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (localSiteConfig.imagenHero) {
+                                  navigator.clipboard.writeText(localSiteConfig.imagenHero);
+                                  showNotification('URL copiada al portapapeles', 'info');
+                                }
+                              }}
+                              className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
+                              title="Copiar URL"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            {localSiteConfig.imagenHero && (
+                              <a
+                                href={localSiteConfig.imagenHero}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
+                                title="Abrir en pestaña nueva"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones de acción para Sección 2 */}
+                      <div className="mt-4 pt-3 border-t border-stone-100 flex flex-wrap items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Subir nueva foto</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleSiteImageUpload('imagenHero', e.target.files[0]);
+                                e.target.value = '';
+                              }
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const current = localSiteConfig.imagenHero || '';
+                            const url = window.prompt('Pega la URL directa de la imagen (https://...):', current);
+                            if (url !== null && url.trim()) {
+                              handleManualSiteImageUrlChange('imagenHero', url.trim());
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                        >
+                          <LinkIcon className="w-3.5 h-3.5" />
+                          <span>Pegar URL</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleResetSiteImage('imagenHero')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors ml-auto"
+                          title="Restaurar a la foto original"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span className="hidden sm:inline">Restaurar</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Tarjeta de Publicación en GitHub */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-stone-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                        <Server className="w-5 h-5 text-[#A8577F]" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-stone-900">
+                          Publicación permanente en el repositorio
+                        </h4>
+                        <p className="text-[11px] text-stone-500 mt-0.5">
+                          Guarda los cambios en <code>src/data/siteConfig.ts</code> con un commit en la rama <code>main</code> de GitHub.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => publishSiteContentToGitHub(localSiteConfig)}
+                      disabled={isPublishingSiteContent}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shrink-0 disabled:opacity-50 shadow-sm"
+                    >
+                      {isPublishingSiteContent ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Guardando en GitHub...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Guardar y Publicar Cambios de Contenido</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* TAB 3: RESPALDO MANUAL */}

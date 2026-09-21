@@ -1,9 +1,16 @@
 import React from 'react';
 import { Heart, Sparkles, Award, Users, CheckCircle2, MessageCircle } from 'lucide-react';
 import { createWhatsAppLink, createGeneralWhatsAppMessage } from '../utils/formatters';
+import { siteConfig as defaultSiteConfig } from '../data/siteConfig';
+import { SiteConfig } from '../types';
 
-export const AboutSection: React.FC = () => {
+interface AboutSectionProps {
+  siteConfig?: SiteConfig;
+}
+
+export const AboutSection: React.FC<AboutSectionProps> = ({ siteConfig = defaultSiteConfig }) => {
   const waLink = createWhatsAppLink(createGeneralWhatsAppMessage());
+  const displayImage = siteConfig?.imagenNuestraHistoria || defaultSiteConfig.imagenNuestraHistoria || 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop';
 
   return (
     <section id="nosotros" className="py-20 sm:py-28 bg-white relative overflow-hidden">
@@ -20,7 +27,7 @@ export const AboutSection: React.FC = () => {
               {/* Primary Image: Professional scrub & tailoring */}
               <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-[#FAF7F5] aspect-[4/4.5] bg-stone-100">
                 <img
-                  src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop"
+                  src={displayImage}
                   alt="Taller de confección y diseño ZUniforme Neiva"
                   className="w-full h-full object-cover"
                   loading="lazy"

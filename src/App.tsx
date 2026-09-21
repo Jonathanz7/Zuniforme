@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Product } from './types';
+import { Product, SiteConfig } from './types';
 import { getStoredProducts, saveStoredProducts } from './utils/productStorage';
+import { getStoredSiteConfig, saveStoredSiteConfig } from './utils/siteConfigStorage';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Catalog } from './components/Catalog';
@@ -16,6 +17,7 @@ import { createWhatsAppLink, createGeneralWhatsAppMessage } from './utils/format
 
 export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(getStoredSiteConfig());
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedColorName, setSelectedColorName] = useState<string | undefined>(undefined);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -25,6 +27,9 @@ export default function App() {
   useEffect(() => {
     const loaded = getStoredProducts();
     setProducts(loaded);
+
+    const loadedConfig = getStoredSiteConfig();
+    setSiteConfig(loadedConfig);
 
     // Check if URL hash is #admin to open admin directly
     if (window.location.hash === '#admin') {
@@ -55,6 +60,11 @@ export default function App() {
     saveStoredProducts(updatedProducts);
   };
 
+  const handleSaveSiteConfig = (updatedConfig: SiteConfig) => {
+    setSiteConfig(updatedConfig);
+    saveStoredSiteConfig(updatedConfig);
+  };
+
   const handleSelectProduct = (product: Product, initialColorName?: string) => {
     setSelectedProduct(product);
     setSelectedColorName(initialColorName);
@@ -75,6 +85,7 @@ export default function App() {
         <Hero
           featuredProduct={products.find((p) => p.destacado) || products[0]}
           onSelectProduct={handleSelectProduct}
+          siteConfig={siteConfig}
         />
 
         {/* Catalog Section */}
@@ -84,7 +95,7 @@ export default function App() {
         />
 
         {/* Brand Story & Craftsmanship */}
-        <AboutSection />
+        <AboutSection siteConfig={siteConfig} />
 
         {/* Corporate & Clinic Dotations Solutions */}
         <DotacionesBanner />
@@ -115,6 +126,8 @@ export default function App() {
         onClose={() => setIsAdminOpen(false)}
         products={products}
         onSaveProducts={handleSaveProducts}
+        siteConfig={siteConfig}
+        onSaveSiteConfig={handleSaveSiteConfig}
       />
 
       {/* Floating WhatsApp Action Button */}
