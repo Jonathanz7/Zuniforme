@@ -30,8 +30,9 @@ export const initialProducts: Product[] = [
         "colorHex": "#C70033",
         "imagenes": [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959922760-1.png",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959837004-zu-scrub-aura-negro-azabache.jpg",
-          "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=1000&auto=format&fit=crop"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960472940-2.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960478168-3.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960483749-4.png"
         ]
       }
     ]
