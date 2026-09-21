@@ -39,10 +39,10 @@ export const initialProducts: Product[] = [
   },
   {
     "id": "zu-chaqueta-luna",
-    "nombre": "Chaqueta Antifluidos Luna Bomber",
-    "categoria": "Chaquetas Antifluidos",
-    "descripcion": "Chaqueta antifluido estilo bomber con cuello nerú rib suave y cierre metálico inoxidable en tono oro rosa. Ideal para complementar tu uniforme clínico, mantener la temperatura adecuada en consultorio con aire acondicionado y conservar un look femenino y sofisticado.",
-    "precio": 98000,
+    "nombre": "Conjunto Alma",
+    "categoria": "Uniformes Quirúrgicos",
+    "descripcion": "Conjunto femenino de diseño moderno compuesto por blusa sin mangas con cuello alto y cierre frontal, y pantalón tipo jogger con pretina elástica y bolsillos cargo. Diseñado para brindar comodidad, libertad de movimiento y funcionalidad durante jornadas profesionales.",
+    "precio": 999999,
     "tallas": [
       "XS",
       "S",
@@ -52,7 +52,7 @@ export const initialProducts: Product[] = [
     ],
     "genero": "Femenino",
     "destacado": true,
-    "tela": "Antifluido semi-impermeable con forro interior transpirable",
+    "tela": "Antifluido semi-impermeable con forro interior transpirableTela / composición: Lafayette 4-Way Stretch — 96% poliéster, 4% spandex",
     "caracteristicas": [
       "Puños y cuello en rib elástico resistente al desgaste",
       "Cierre central dorado / oro rosa de alta durabilidad",
@@ -61,26 +61,13 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Azul",
-        "colorHex": "#22165a",
+        "color": "Ébano",
+        "colorHex": "#0B0B0D",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959837811-zu-chaqueta-luna-azul.jpg",
-          "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Mauve Oscuro",
-        "colorHex": "#8C3D65",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Blanco Clínico",
-        "colorHex": "#FFFFFF",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1000&auto=format&fit=crop"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961282698-1.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961284977-2.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961288251-3.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961291950-4.png"
         ]
       }
     ]
