@@ -27,6 +27,21 @@ export default defineConfig(() => {
               }
               return;
             }
+
+            if (req.url && (req.url === '/api/upload-image' || req.url.startsWith('/api/upload-image?'))) {
+              try {
+                const handlerMod = await server.ssrLoadModule('/api/upload-image.ts');
+                await handlerMod.default(req, res);
+              } catch (err: any) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ 
+                  success: false, 
+                  error: err?.message || 'Error en endpoint dev /api/upload-image' 
+                }));
+              }
+              return;
+            }
             next();
           });
         },

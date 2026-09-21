@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Product, ColorVariant } from '../types';
 import { CATEGORIES } from '../data/products';
 import { 
@@ -6,11 +6,12 @@ import {
   generateProductsTypeScriptCode, 
   resetToDefaultProducts 
 } from '../utils/productStorage';
+import { compressAndResizeImage, compressBase64Image } from '../utils/imageCompressor';
 import { 
   X, Plus, Trash2, Edit, Download, Copy, Check, Lock, 
   RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
   AlertCircle, CheckCircle2, Loader2, ShieldCheck,
-  ExternalLink, Server
+  ExternalLink, Server, CloudUpload
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -35,11 +36,30 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadingVariantIdx, setUploadingVariantIdx] = useState<number | null>(null);
+  const [uploadStatusText, setUploadStatusText] = useState<string>('');
+  const [isMigratingBase64, setIsMigratingBase64] = useState(false);
+  const [migrationProgress, setMigrationProgress] = useState<{ current: number; total: number; percent: number } | null>(null);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     text: string;
     commitUrl?: string;
   } | null>(null);
+
+  // Contar cuántas imágenes existen en formato base64 en todo el catálogo
+  const base64ImagesCount = useMemo(() => {
+    let count = 0;
+    products.forEach((p) => {
+      p.variantesColor?.forEach((v) => {
+        v.imagenes?.forEach((img) => {
+          if (typeof img === 'string' && img.startsWith('data:image')) {
+            count++;
+          }
+        });
+      });
+    });
+    return count;
+  }, [products]);
 
   if (!isOpen) return null;
 
@@ -231,16 +251,182 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setEditingProduct({ ...editingProduct, variantesColor: updated });
   };
 
-  const handleImageFileUpload = (variantIndex: number, file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string' && editingProduct) {
-        const updated = [...editingProduct.variantesColor];
-        updated[variantIndex].imagenes = [reader.result, ...updated[variantIndex].imagenes];
-        setEditingProduct({ ...editingProduct, variantesColor: updated });
+  /**
+   * Sube una sola imagen a Vercel Blob usando api/upload-image.
+   * Primero redimensiona y comprime la imagen a máx 1600px y calidad JPEG 0.8 en el navegador con canvas,
+   * reduciendo drásticamente su tamaño y protegiendo la cuota y velocidad de Vercel.
+   */
+  const handleImageFileUpload = async (variantIndex: number, file: File) => {
+    if (!editingProduct) return;
+
+    const password = adminPassword || passwordInput.trim();
+    if (!password) {
+      showNotification('Ingresa tu contraseña de administrador para subir imágenes a Vercel Blob.', 'error');
+      return;
+    }
+
+    setUploadingVariantIdx(variantIndex);
+    setUploadStatusText('Comprimiendo imagen (máx 1600px)...');
+
+    try {
+      // 1. Comprimir en cliente con Canvas
+      const compressed = await compressAndResizeImage(file, 1600, 0.8);
+      
+      const kbSize = Math.round(compressed.compressedSize / 1024);
+      setUploadStatusText(`Subiendo a Vercel Blob (${kbSize} KB)...`);
+
+      // 2. Subir imagen individual a api/upload-image
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          adminPassword: password,
+          filename: file.name,
+          image: compressed.dataUrl,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || `Error HTTP ${response.status}: ${response.statusText}`);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 3. Asignar la URL permanente retornada por Vercel Blob
+      const newImageUrl = data.url;
+      const updated = [...editingProduct.variantesColor];
+      // Asignar como imagen principal para este color
+      const currentImgs = updated[variantIndex].imagenes || [];
+      updated[variantIndex].imagenes = [newImageUrl, ...currentImgs.filter((u) => u !== newImageUrl)];
+      setEditingProduct({ ...editingProduct, variantesColor: updated });
+
+      showNotification(
+        `✅ Foto optimizada (-${compressed.reductionPercentage}%) y subida a Vercel Blob.`,
+        'success'
+      );
+    } catch (err: any) {
+      showNotification(
+        `Error al subir a Vercel Blob: ${err?.message || 'Error desconocido'}`,
+        'error'
+      );
+    } finally {
+      setUploadingVariantIdx(null);
+      setUploadStatusText('');
+    }
+  };
+
+  /**
+   * Migración automática de todas las imágenes Base64 existentes a Vercel Blob.
+   * Itera sobre cada imagen en base64, la sube a Vercel Blob y actualiza el catálogo con la URL resultante.
+   */
+  const handleMigrateBase64Images = async () => {
+    const password = adminPassword || passwordInput.trim();
+    if (!password) {
+      showNotification('Ingresa tu contraseña de administrador para autorizar la migración a Vercel Blob.', 'error');
+      return;
+    }
+
+    interface Base64Item {
+      prodId: string;
+      variantIdx: number;
+      imgIdx: number;
+      base64: string;
+      prodName: string;
+      colorName: string;
+    }
+
+    const itemsToMigrate: Base64Item[] = [];
+    products.forEach((prod) => {
+      prod.variantesColor?.forEach((variant, vIdx) => {
+        variant.imagenes?.forEach((img, iIdx) => {
+          if (typeof img === 'string' && img.startsWith('data:image')) {
+            itemsToMigrate.push({
+              prodId: prod.id,
+              variantIdx: vIdx,
+              imgIdx: iIdx,
+              base64: img,
+              prodName: prod.nombre,
+              colorName: variant.color,
+            });
+          }
+        });
+      });
+    });
+
+    if (itemsToMigrate.length === 0) {
+      showNotification('No hay imágenes en base64 para migrar en este momento.', 'info');
+      return;
+    }
+
+    if (!window.confirm(`Se migrarán ${itemsToMigrate.length} foto(s) Base64 a Vercel Blob. ¿Deseas iniciar la migración?`)) {
+      return;
+    }
+
+    setIsMigratingBase64(true);
+    setMigrationProgress({ current: 0, total: itemsToMigrate.length, percent: 0 });
+
+    try {
+      const updatedProducts: Product[] = JSON.parse(JSON.stringify(products));
+
+      for (let i = 0; i < itemsToMigrate.length; i++) {
+        const item = itemsToMigrate[i];
+        setMigrationProgress({
+          current: i + 1,
+          total: itemsToMigrate.length,
+          percent: Math.round(((i + 1) / itemsToMigrate.length) * 100),
+        });
+
+        // Comprimir si es posible
+        let payloadImage = item.base64;
+        try {
+          const comp = await compressBase64Image(item.base64, 1600, 0.8);
+          payloadImage = comp.dataUrl;
+        } catch {
+          // Si falla compresión en canvas, usa el original
+        }
+
+        const safeColor = item.colorName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const filename = `${item.prodId}-${safeColor}.jpg`;
+
+        const res = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            adminPassword: password,
+            filename,
+            image: payloadImage,
+          }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success || !data.url) {
+          throw new Error(
+            `Fallo en imagen ${i + 1} (${item.prodName} - ${item.colorName}): ${data.error || 'Error de subida a Vercel Blob'}`
+          );
+        }
+
+        // Reemplazar la URL base64 por la URL de Vercel Blob
+        const targetProd = updatedProducts.find((p) => p.id === item.prodId);
+        if (targetProd && targetProd.variantesColor[item.variantIdx]) {
+          targetProd.variantesColor[item.variantIdx].imagenes[item.imgIdx] = data.url;
+        }
+      }
+
+      // Guardar localmente
+      onSaveProducts(updatedProducts);
+
+      // Publicar de inmediato a GitHub/Vercel sin fotos pesadas
+      showNotification('✅ Fotos migradas a Vercel Blob. Publicando catálogo optimizado...', 'info');
+      await publishToVercel(updatedProducts);
+      showNotification('🎉 ¡Migración completada exitosamente! Tu catálogo ya no tiene imágenes base64.', 'success');
+    } catch (err: any) {
+      showNotification(`Error en migración: ${err?.message || 'Error desconocido'}`, 'error');
+    } finally {
+      setIsMigratingBase64(false);
+      setMigrationProgress(null);
+    }
   };
 
   const handleReset = () => {
@@ -455,6 +641,52 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               {/* TAB 1: LISTA DE PRODUCTOS */}
               {activeTab === 'lista' && (
                 <div className="space-y-4">
+                  {/* Banner de migración de imágenes si existen base64 */}
+                  {base64ImagesCount > 0 && (
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                          <CloudUpload className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-amber-950">
+                            Se detectaron {base64ImagesCount} imagen(es) en formato Base64
+                          </h4>
+                          <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                            Las fotos en Base64 inflan el tamaño del catálogo y provocan el error 413 en Vercel. Migra las fotos a Vercel Blob para que el catálogo viaje liviano y se publique al instante.
+                          </p>
+                          {isMigratingBase64 && migrationProgress && (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex justify-between text-[11px] font-semibold text-amber-900">
+                                <span>Migrando foto {migrationProgress.current} de {migrationProgress.total}...</span>
+                                <span>{migrationProgress.percent}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-amber-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-[#A8577F] transition-all duration-300 rounded-full"
+                                  style={{ width: `${migrationProgress.percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleMigrateBase64Images}
+                        disabled={isMigratingBase64 || isPublishing}
+                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5 self-start sm:self-center"
+                      >
+                        {isMigratingBase64 ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5" />
+                        )}
+                        <span>Migrar {base64ImagesCount} fotos a Vercel Blob</span>
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-500 pb-2 border-b border-stone-100">
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -696,56 +928,112 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Image URLs or Upload */}
+                          {/* Image URLs or Upload to Vercel Blob */}
                           <div>
-                            <label className="block text-[11px] font-semibold text-stone-600 mb-1">
-                              URL de Fotografía principal o Subir imagen
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={variant.imagenes[0] || ''}
-                                onChange={(e) => {
-                                  const updatedImgs = [...variant.imagenes];
-                                  updatedImgs[0] = e.target.value;
-                                  handleVariantChange(vIdx, 'imagenes', updatedImgs);
-                                }}
-                                placeholder="https://ejemplo.com/foto-uniforme.jpg"
-                                className="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs bg-white"
-                              />
-
-                              <label className="px-3 py-1.5 rounded-lg bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1">
-                                <Upload className="w-3.5 h-3.5" />
-                                <span>Subir</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                      handleImageFileUpload(vIdx, e.target.files[0]);
-                                    }
-                                  }}
-                                />
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold text-stone-600">
+                                Fotografía principal (URL o Vercel Blob)
                               </label>
+                              {variant.imagenes[0]?.includes('blob.vercel-storage.com') ? (
+                                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                                  ✓ Vercel Blob
+                                </span>
+                              ) : variant.imagenes[0]?.startsWith('data:image') ? (
+                                <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-bold border border-amber-200">
+                                  ⚠️ Base64 (sube a Vercel Blob)
+                                </span>
+                              ) : null}
                             </div>
 
-                            {/* Image preview */}
-                            {variant.imagenes[0] && (
-                              <div className="mt-2 flex items-center gap-2">
-                                <div className="w-12 h-14 rounded-lg overflow-hidden bg-stone-200 border border-stone-300 shrink-0">
-                                  <img
-                                    src={variant.imagenes[0]}
-                                    alt="Vista previa"
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
+                            <div 
+                              className="relative"
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                  handleImageFileUpload(vIdx, e.dataTransfer.files[0]);
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={variant.imagenes[0] || ''}
+                                  onChange={(e) => {
+                                    const updatedImgs = [...variant.imagenes];
+                                    updatedImgs[0] = e.target.value;
+                                    handleVariantChange(vIdx, 'imagenes', updatedImgs);
+                                  }}
+                                  placeholder="https://... o arrastra una foto aquí"
+                                  className="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs bg-white"
+                                />
+
+                                <label className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1 transition-colors ${
+                                  uploadingVariantIdx === vIdx
+                                    ? 'bg-amber-100 border-amber-300 text-amber-800 opacity-60 cursor-not-allowed'
+                                    : 'bg-white border-stone-200 hover:bg-stone-50 text-stone-700'
+                                }`}>
+                                  {uploadingVariantIdx === vIdx ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                                  ) : (
+                                    <Upload className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{uploadingVariantIdx === vIdx ? 'Subiendo...' : 'Subir'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    disabled={uploadingVariantIdx === vIdx}
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        handleImageFileUpload(vIdx, e.target.files[0]);
+                                      }
+                                    }}
                                   />
-                                </div>
-                                <span className="text-[11px] text-stone-500">
-                                  Vista previa de foto asignada a este color.
-                                </span>
+                                </label>
                               </div>
-                            )}
+
+                              {/* Barra o aviso de Subiendo imagen... */}
+                              {uploadingVariantIdx === vIdx && (
+                                <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2.5 text-xs text-amber-900 animate-pulse">
+                                  <Loader2 className="w-4 h-4 animate-spin text-amber-600 shrink-0" />
+                                  <div className="flex-grow">
+                                    <div className="flex justify-between items-center text-[11px] font-semibold">
+                                      <span>{uploadStatusText || 'Subiendo imagen a Vercel Blob...'}</span>
+                                    </div>
+                                    <div className="w-full bg-amber-200 h-1 rounded-full mt-1 overflow-hidden">
+                                      <div className="bg-amber-600 h-full w-2/3 animate-[pulse_1s_infinite] rounded-full" />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Image preview */}
+                              {variant.imagenes[0] && (
+                                <div className="mt-2 flex items-center gap-2.5">
+                                  <div className="w-12 h-14 rounded-lg overflow-hidden bg-stone-200 border border-stone-300 shrink-0 relative group">
+                                    <img
+                                      src={variant.imagenes[0]}
+                                      alt="Vista previa"
+                                      className="w-full h-full object-cover"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  </div>
+                                  <div className="text-[11px] text-stone-500 leading-tight">
+                                    <p className="font-semibold text-stone-700">Vista previa asignada</p>
+                                    <p className="text-[10px] text-stone-400 truncate max-w-xs mt-0.5">
+                                      {variant.imagenes[0].startsWith('data:') 
+                                        ? 'Imagen Base64 incrustada' 
+                                        : variant.imagenes[0]}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}

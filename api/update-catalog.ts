@@ -21,7 +21,10 @@ interface Product {
 interface UpdateCatalogBody {
   adminPassword?: string;
   products?: Product[];
+  _rawSize?: number;
 }
+
+const MAX_PAYLOAD_BYTES = 1024 * 1024; // 1 MB límite seguro
 
 /**
  * Parsea el cuerpo de la petición de manera compatible con Vercel Serverless
@@ -31,12 +34,14 @@ async function parseRequestBody(req: any): Promise<UpdateCatalogBody> {
   if (req.body) {
     if (typeof req.body === 'string') {
       try {
-        return JSON.parse(req.body);
+        const parsed = JSON.parse(req.body);
+        parsed._rawSize = Buffer.byteLength(req.body, 'utf8');
+        return parsed;
       } catch {
-        return {};
+        return { _rawSize: Buffer.byteLength(req.body, 'utf8') };
       }
     }
-    return req.body;
+    return { ...req.body, _rawSize: Buffer.byteLength(JSON.stringify(req.body), 'utf8') };
   }
 
   return new Promise((resolve) => {
@@ -46,9 +51,11 @@ async function parseRequestBody(req: any): Promise<UpdateCatalogBody> {
     });
     req.on('end', () => {
       try {
-        resolve(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        parsed._rawSize = Buffer.byteLength(raw, 'utf8');
+        resolve(parsed);
       } catch {
-        resolve({});
+        resolve({ _rawSize: Buffer.byteLength(raw, 'utf8') });
       }
     });
     req.on('error', () => {
@@ -102,8 +109,24 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    // 1.1 Validar tamaño del cuerpo de la petición (máximo 1 MB)
+    const contentLength = Number(req.headers?.['content-length']) || 0;
+    if (contentLength > MAX_PAYLOAD_BYTES) {
+      return sendJsonResponse(res, 413, {
+        success: false,
+        error: 'El catálogo es demasiado grande para publicarse de una vez, contacta soporte.',
+      });
+    }
+
     const body = await parseRequestBody(req);
-    const { adminPassword, products } = body;
+    const { adminPassword, products, _rawSize } = body;
+
+    if (_rawSize && _rawSize > MAX_PAYLOAD_BYTES) {
+      return sendJsonResponse(res, 413, {
+        success: false,
+        error: 'El catálogo es demasiado grande para publicarse de una vez, contacta soporte.',
+      });
+    }
 
     // 2. Validar contraseña contra la variable de entorno ADMIN_PASSWORD
     const expectedPassword = process.env.ADMIN_PASSWORD;
@@ -127,6 +150,25 @@ export default async function handler(req: any, res: any) {
       return sendJsonResponse(res, 400, {
         success: false,
         error: 'El cuerpo de la petición debe contener un array de productos válido.',
+      });
+    }
+
+    // 3.1 Validar que no se envíen fotos en base64 incrustadas dentro del catálogo
+    let base64Count = 0;
+    for (const prod of products) {
+      for (const variant of prod.variantesColor || []) {
+        for (const img of variant.imagenes || []) {
+          if (typeof img === 'string' && img.startsWith('data:image')) {
+            base64Count++;
+          }
+        }
+      }
+    }
+
+    if (base64Count > 0) {
+      return sendJsonResponse(res, 400, {
+        success: false,
+        error: `Se detectaron ${base64Count} imagen(es) en base64. Las fotos deben subirse como URLs de Vercel Blob para no superar el límite de tamaño. Usa el botón "Migrar fotos a Vercel Blob" en el panel administrativo.`,
       });
     }
 
