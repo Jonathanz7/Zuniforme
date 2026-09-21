@@ -84,52 +84,6 @@ export const initialProducts: Product[] = [
         ]
       }
     ]
-  },
-  {
-    "id": "zu-scrub-essential",
-    "nombre": "Uniforme Quirúrgico Essential Cuello Cruzado",
-    "categoria": "Uniformes Quirúrgicos",
-    "descripcion": "Uniforme clásico modernizado con escote cruzado en rib elástico a tono, aberturas laterales ergonómicas y pantalón bota recta con elástico en cintura. La elección predilecta para dotación completa de equipos médicos, enfermería y veterinaria en Neiva y toda Colombia.",
-    "precio": 120000,
-    "tallas": [
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "genero": "Unisex",
-    "destacado": false,
-    "tela": "Antifluido Clásico Repelente Lafayette",
-    "caracteristicas": [
-      "Diseño versátil apto para dotaciones corporativas e institucionales",
-      "Excelente relación durabilidad/costo para pedidos al por mayor",
-      "Color sólido garantizado por más de 100 lavadas industriales",
-      "Descuento especial en dotaciones a partir de 6 conjuntos"
-    ],
-    "variantesColor": [
-      {
-        "color": "Azul Celeste Hospitalario",
-        "colorHex": "#7EA0B7",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Vino Tinto / Borgoña",
-        "colorHex": "#682035",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Mauve ZUniforme",
-        "colorHex": "#A8577F",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop"
-        ]
-      }
-    ]
   }
 ];
 
