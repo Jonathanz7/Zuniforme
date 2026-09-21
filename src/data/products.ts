@@ -86,52 +86,6 @@ export const initialProducts: Product[] = [
     ]
   },
   {
-    "id": "zu-bata-estetica",
-    "nombre": "Bata Antifluido Silueta Slim & Spa",
-    "categoria": "Batas Médicas & Spa",
-    "descripcion": "Bata manga 3/4 o larga con corte estilizado princesa, abotonadura frontal oculta y bolsillos diagonales reforzados. Especialmente concebida para odontología, medicina estética, dermatología, cosmetología y laboratorios que requieren una presencia pulcra y distinguida.",
-    "precio": 110000,
-    "tallas": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "genero": "Femenino",
-    "destacado": true,
-    "tela": "Antifluido Universal de Alta Densidad",
-    "caracteristicas": [
-      "Silueta entallada que favorece la postura sin restringir movimiento",
-      "Pinzas en espalda y cinturón decorativo integrado",
-      "Resistencia a salpicaduras químicas leves y desinfectantes",
-      "Cuello mao refinado con acabado suave"
-    ],
-    "variantesColor": [
-      {
-        "color": "Blanco Puro",
-        "colorHex": "#FFFFFF",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Rosa Palo Suave",
-        "colorHex": "#FBE8EF",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Mauve ZUniforme",
-        "colorHex": "#A8577F",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-        ]
-      }
-    ]
-  },
-  {
     "id": "zu-scrub-essential",
     "nombre": "Uniforme Quirúrgico Essential Cuello Cruzado",
     "categoria": "Uniformes Quirúrgicos",
