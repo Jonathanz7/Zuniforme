@@ -11,7 +11,8 @@ import {
   X, Plus, Trash2, Edit, Download, Copy, Check, Lock, 
   RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
   AlertCircle, CheckCircle2, Loader2, ShieldCheck,
-  ExternalLink, Server, CloudUpload
+  ExternalLink, Server, CloudUpload, ArrowLeft, ArrowRight,
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -36,7 +37,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [uploadingVariantIdx, setUploadingVariantIdx] = useState<number | null>(null);
+  const [uploadingSlot, setUploadingSlot] = useState<{ variantIdx: number; photoIdx: number } | null>(null);
   const [uploadStatusText, setUploadStatusText] = useState<string>('');
   const [isMigratingBase64, setIsMigratingBase64] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState<{ current: number; total: number; percent: number } | null>(null);
@@ -166,7 +167,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleStartEdit = (p: Product) => {
-    setEditingProduct(JSON.parse(JSON.stringify(p)));
+    const cloned: Product = JSON.parse(JSON.stringify(p));
+    // Garantizar que cada variante tenga un array de imágenes
+    if (cloned.variantesColor) {
+      cloned.variantesColor.forEach((v) => {
+        if (!Array.isArray(v.imagenes)) {
+          v.imagenes = v.imagenes ? [(v as any).imagenes] : [];
+        }
+      });
+    }
+    setEditingProduct(cloned);
     setActiveTab('editor');
   };
 
@@ -224,9 +234,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     const newVariant: ColorVariant = {
       color: 'Nuevo Color',
       colorHex: '#F4B8CC',
-      imagenes: [
-        'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop'
-      ]
+      imagenes: []
     };
     setEditingProduct({
       ...editingProduct,
@@ -252,11 +260,71 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   /**
-   * Sube una sola imagen a Vercel Blob usando api/upload-image.
-   * Primero redimensiona y comprime la imagen a máx 1600px y calidad JPEG 0.8 en el navegador con canvas,
-   * reduciendo drásticamente su tamaño y protegiendo la cuota y velocidad de Vercel.
+   * Elimina una fotografía específica dentro de una variante de color.
    */
-  const handleImageFileUpload = async (variantIndex: number, file: File) => {
+  const handleRemoveImage = (variantIndex: number, photoIndex: number) => {
+    if (!editingProduct) return;
+    const updated = [...editingProduct.variantesColor];
+    const imgs = [...(updated[variantIndex].imagenes || [])];
+    imgs.splice(photoIndex, 1);
+    updated[variantIndex] = { ...updated[variantIndex], imagenes: imgs };
+    setEditingProduct({ ...editingProduct, variantesColor: updated });
+  };
+
+  /**
+   * Reordena las fotografías moviéndolas a la izquierda (hacia portada) o derecha.
+   */
+  const handleMoveImage = (variantIndex: number, photoIndex: number, direction: 'left' | 'right') => {
+    if (!editingProduct) return;
+    const updated = [...editingProduct.variantesColor];
+    const imgs = [...(updated[variantIndex].imagenes || [])];
+    const targetIdx = direction === 'left' ? photoIndex - 1 : photoIndex + 1;
+    if (targetIdx < 0 || targetIdx >= imgs.length) return;
+
+    const temp = imgs[photoIndex];
+    imgs[photoIndex] = imgs[targetIdx];
+    imgs[targetIdx] = temp;
+
+    updated[variantIndex] = { ...updated[variantIndex], imagenes: imgs };
+    setEditingProduct({ ...editingProduct, variantesColor: updated });
+  };
+
+  /**
+   * Agrega una URL de imagen a la variante (hasta un máximo de 4).
+   */
+  const handleAddImageUrl = (variantIndex: number, url: string) => {
+    if (!editingProduct || !url.trim()) return;
+    const updated = [...editingProduct.variantesColor];
+    const imgs = [...(updated[variantIndex].imagenes || [])];
+    if (imgs.length >= 4) {
+      alert('Cada variante puede tener un máximo de 4 fotografías');
+      return;
+    }
+    imgs.push(url.trim());
+    updated[variantIndex] = { ...updated[variantIndex], imagenes: imgs };
+    setEditingProduct({ ...editingProduct, variantesColor: updated });
+  };
+
+  /**
+   * Modifica manualmente una URL de foto en una posición determinada.
+   */
+  const handleManualImageUrlChange = (variantIndex: number, photoIndex: number, url: string) => {
+    if (!editingProduct) return;
+    const updated = [...editingProduct.variantesColor];
+    const imgs = [...(updated[variantIndex].imagenes || [])];
+    if (photoIndex < imgs.length) {
+      imgs[photoIndex] = url;
+    }
+    updated[variantIndex] = { ...updated[variantIndex], imagenes: imgs };
+    setEditingProduct({ ...editingProduct, variantesColor: updated });
+  };
+
+  /**
+   * Sube una sola imagen a Vercel Blob usando api/upload-image.
+   * Si photoIndex viene especificado y está dentro del array, reemplaza esa foto.
+   * Si photoIndex no viene o apunta al final, añade una nueva foto a la variante (hasta 4).
+   */
+  const handleImageFileUpload = async (variantIndex: number, file: File, photoIndex?: number) => {
     if (!editingProduct) return;
 
     const password = adminPassword || passwordInput.trim();
@@ -265,7 +333,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
-    setUploadingVariantIdx(variantIndex);
+    const currentImgs = editingProduct.variantesColor[variantIndex]?.imagenes || [];
+    const targetPhotoIdx = photoIndex !== undefined ? photoIndex : currentImgs.length;
+
+    setUploadingSlot({ variantIdx: variantIndex, photoIdx: targetPhotoIdx });
     setUploadStatusText('Comprimiendo imagen (máx 1600px)...');
 
     try {
@@ -297,9 +368,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       // 3. Asignar la URL permanente retornada por Vercel Blob
       const newImageUrl = data.url;
       const updated = [...editingProduct.variantesColor];
-      // Asignar como imagen principal para este color
-      const currentImgs = updated[variantIndex].imagenes || [];
-      updated[variantIndex].imagenes = [newImageUrl, ...currentImgs.filter((u) => u !== newImageUrl)];
+      const imgs = [...(updated[variantIndex].imagenes || [])];
+
+      if (photoIndex !== undefined && photoIndex < imgs.length) {
+        // Reemplazar la foto existente en este slot
+        imgs[photoIndex] = newImageUrl;
+      } else {
+        // Añadir una nueva foto hasta llegar al máximo de 4
+        if (imgs.length < 4) {
+          imgs.push(newImageUrl);
+        } else {
+          imgs[3] = newImageUrl;
+        }
+      }
+
+      updated[variantIndex] = { ...updated[variantIndex], imagenes: imgs };
       setEditingProduct({ ...editingProduct, variantesColor: updated });
 
       showNotification(
@@ -312,7 +395,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         'error'
       );
     } finally {
-      setUploadingVariantIdx(null);
+      setUploadingSlot(null);
       setUploadStatusText('');
     }
   };
@@ -928,112 +1011,264 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Image URLs or Upload to Vercel Blob */}
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-[11px] font-semibold text-stone-600">
-                                Fotografía principal (URL o Vercel Blob)
-                              </label>
-                              {variant.imagenes[0]?.includes('blob.vercel-storage.com') ? (
-                                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                                  ✓ Vercel Blob
-                                </span>
-                              ) : variant.imagenes[0]?.startsWith('data:image') ? (
-                                <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-bold border border-amber-200">
-                                  ⚠️ Base64 (sube a Vercel Blob)
-                                </span>
-                              ) : null}
-                            </div>
-
-                            <div 
-                              className="relative"
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                              }}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                  handleImageFileUpload(vIdx, e.dataTransfer.files[0]);
-                                }
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={variant.imagenes[0] || ''}
-                                  onChange={(e) => {
-                                    const updatedImgs = [...variant.imagenes];
-                                    updatedImgs[0] = e.target.value;
-                                    handleVariantChange(vIdx, 'imagenes', updatedImgs);
-                                  }}
-                                  placeholder="https://... o arrastra una foto aquí"
-                                  className="w-full px-3 py-1.5 rounded-lg border border-stone-200 text-xs bg-white"
-                                />
-
-                                <label className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1 transition-colors ${
-                                  uploadingVariantIdx === vIdx
-                                    ? 'bg-amber-100 border-amber-300 text-amber-800 opacity-60 cursor-not-allowed'
-                                    : 'bg-white border-stone-200 hover:bg-stone-50 text-stone-700'
-                                }`}>
-                                  {uploadingVariantIdx === vIdx ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                                  ) : (
-                                    <Upload className="w-3.5 h-3.5" />
-                                  )}
-                                  <span>{uploadingVariantIdx === vIdx ? 'Subiendo...' : 'Subir'}</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    disabled={uploadingVariantIdx === vIdx}
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      if (e.target.files && e.target.files[0]) {
-                                        handleImageFileUpload(vIdx, e.target.files[0]);
-                                      }
-                                    }}
-                                  />
+                          {/* Fotografías (hasta 4) */}
+                          <div className="pt-2 border-t border-stone-200/60">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
+                              <div>
+                                <label className="block text-xs font-bold text-stone-800">
+                                  Fotografías ({variant.imagenes?.length || 0}/4)
                                 </label>
+                                <p className="text-[11px] text-stone-500">
+                                  La primera foto (<span className="text-[#A8577F] font-semibold">Portada</span>) es la que se muestra en la tarjeta del catálogo.
+                                </p>
                               </div>
 
-                              {/* Barra o aviso de Subiendo imagen... */}
-                              {uploadingVariantIdx === vIdx && (
-                                <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2.5 text-xs text-amber-900 animate-pulse">
-                                  <Loader2 className="w-4 h-4 animate-spin text-amber-600 shrink-0" />
-                                  <div className="flex-grow">
-                                    <div className="flex justify-between items-center text-[11px] font-semibold">
-                                      <span>{uploadStatusText || 'Subiendo imagen a Vercel Blob...'}</span>
-                                    </div>
-                                    <div className="w-full bg-amber-200 h-1 rounded-full mt-1 overflow-hidden">
-                                      <div className="bg-amber-600 h-full w-2/3 animate-[pulse_1s_infinite] rounded-full" />
-                                    </div>
-                                  </div>
-                                </div>
+                              {variant.imagenes && variant.imagenes.length > 1 && (
+                                <span className="text-[10px] text-stone-400 font-medium self-start sm:self-auto">
+                                  Usa las flechas para elegir cuál va de Portada
+                                </span>
                               )}
+                            </div>
 
-                              {/* Image preview */}
-                              {variant.imagenes[0] && (
-                                <div className="mt-2 flex items-center gap-2.5">
-                                  <div className="w-12 h-14 rounded-lg overflow-hidden bg-stone-200 border border-stone-300 shrink-0 relative group">
-                                    <img
-                                      src={variant.imagenes[0]}
-                                      alt="Vista previa"
-                                      className="w-full h-full object-cover"
-                                      referrerPolicy="no-referrer"
-                                    />
+                            {/* Cuadrícula de fotos */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {(variant.imagenes || []).map((imgUrl, imgIdx) => {
+                                const isPortada = imgIdx === 0;
+                                const isBlob = typeof imgUrl === 'string' && imgUrl.includes('blob.vercel-storage.com');
+                                const isBase64 = typeof imgUrl === 'string' && imgUrl.startsWith('data:image');
+                                const isUploadingThis = uploadingSlot?.variantIdx === vIdx && uploadingSlot?.photoIdx === imgIdx;
+
+                                return (
+                                  <div
+                                    key={imgIdx}
+                                    className={`group/slot relative rounded-xl border bg-white overflow-hidden flex flex-col transition-all ${
+                                      isPortada
+                                        ? 'border-[#A8577F] ring-2 ring-[#F4B8CC]/60 shadow-xs'
+                                        : 'border-stone-200 hover:border-stone-300'
+                                    }`}
+                                    onDragOver={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                    }}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                        handleImageFileUpload(vIdx, e.dataTransfer.files[0], imgIdx);
+                                      }
+                                    }}
+                                  >
+                                    {/* Preview de la foto */}
+                                    <div className="relative aspect-[3/4] w-full bg-stone-100 overflow-hidden flex items-center justify-center">
+                                      {isUploadingThis ? (
+                                        <div className="absolute inset-0 bg-stone-900/70 backdrop-blur-xs flex flex-col items-center justify-center p-2 text-center text-white z-20">
+                                          <Loader2 className="w-5 h-5 animate-spin text-[#F4B8CC] mb-1.5" />
+                                          <span className="text-[10px] font-semibold leading-tight">{uploadStatusText || 'Subiendo...'}</span>
+                                        </div>
+                                      ) : null}
+
+                                      <img
+                                        src={imgUrl}
+                                        alt={`Foto ${imgIdx + 1} de ${variant.color}`}
+                                        className="w-full h-full object-cover object-center"
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                          (e.target as HTMLElement).style.opacity = '0.5';
+                                        }}
+                                      />
+
+                                      {/* Badges superiores */}
+                                      <div className="absolute top-1.5 left-1.5 right-1.5 flex items-center justify-between gap-1 z-10 pointer-events-none">
+                                        <div className="flex items-center gap-1">
+                                          {isPortada ? (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-[#A8577F] text-white shadow-xs">
+                                              Portada
+                                            </span>
+                                          ) : (
+                                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-black/60 text-white backdrop-blur-xs">
+                                              #{imgIdx + 1}
+                                            </span>
+                                          )}
+                                          {isBlob && (
+                                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-600 text-white" title="Almacenada en Vercel Blob">
+                                              Blob
+                                            </span>
+                                          )}
+                                          {isBase64 && (
+                                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-white" title="Base64 (recomendado reemplazar)">
+                                              Base64
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Botón eliminar */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveImage(vIdx, imgIdx)}
+                                          className="pointer-events-auto p-1 rounded-full bg-white/95 hover:bg-red-500 text-stone-600 hover:text-white shadow-sm transition-colors"
+                                          title="Eliminar esta foto"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* Barra inferior de acciones */}
+                                    <div className="p-1.5 bg-stone-50 border-t border-stone-100 flex items-center justify-between gap-1">
+                                      {/* Flechas de reordenar */}
+                                      <div className="flex items-center gap-0.5">
+                                        <button
+                                          type="button"
+                                          disabled={imgIdx === 0}
+                                          onClick={() => handleMoveImage(vIdx, imgIdx, 'left')}
+                                          className="p-1 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                                          title={imgIdx === 1 ? "Mover a Portada" : "Mover a la izquierda"}
+                                        >
+                                          <ArrowLeft className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={imgIdx === (variant.imagenes?.length || 0) - 1}
+                                          onClick={() => handleMoveImage(vIdx, imgIdx, 'right')}
+                                          className="p-1 rounded-md bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                                          title="Mover a la derecha"
+                                        >
+                                          <ArrowRight className="w-3 h-3" />
+                                        </button>
+                                      </div>
+
+                                      {/* Botón Cambiar / Subir y Botón Editar URL */}
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newUrl = window.prompt('Editar URL de esta foto:', imgUrl);
+                                            if (newUrl !== null && newUrl.trim()) {
+                                              handleManualImageUrlChange(vIdx, imgIdx, newUrl.trim());
+                                            }
+                                          }}
+                                          className="p-1 rounded-md bg-white border border-stone-200 text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors"
+                                          title="Editar URL de la foto"
+                                        >
+                                          <LinkIcon className="w-3 h-3" />
+                                        </button>
+
+                                        <label 
+                                          className="px-2 py-1 rounded-md bg-white border border-stone-200 hover:bg-stone-100 text-[10px] font-bold text-stone-700 cursor-pointer flex items-center gap-1 transition-colors"
+                                          title="Subir archivo para reemplazar esta foto en Vercel Blob"
+                                        >
+                                          <Upload className="w-3 h-3 text-[#A8577F]" />
+                                          <span>Cambiar</span>
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            disabled={isUploadingThis}
+                                            className="hidden"
+                                            onChange={(e) => {
+                                              if (e.target.files && e.target.files[0]) {
+                                                handleImageFileUpload(vIdx, e.target.files[0], imgIdx);
+                                              }
+                                            }}
+                                          />
+                                        </label>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="text-[11px] text-stone-500 leading-tight">
-                                    <p className="font-semibold text-stone-700">Vista previa asignada</p>
-                                    <p className="text-[10px] text-stone-400 truncate max-w-xs mt-0.5">
-                                      {variant.imagenes[0].startsWith('data:') 
-                                        ? 'Imagen Base64 incrustada' 
-                                        : variant.imagenes[0]}
-                                    </p>
-                                  </div>
+                                );
+                              })}
+
+                              {/* Slot vacío para añadir siguiente foto (hasta 4) */}
+                              {(variant.imagenes?.length || 0) < 4 && (
+                                <div
+                                  className={`rounded-xl border-2 border-dashed border-stone-300 hover:border-[#A8577F] bg-white/70 hover:bg-white p-3 aspect-[3/4] flex flex-col items-center justify-center text-center transition-all group/add relative ${
+                                    uploadingSlot?.variantIdx === vIdx && uploadingSlot?.photoIdx === (variant.imagenes?.length || 0)
+                                      ? 'opacity-70 pointer-events-none'
+                                      : ''
+                                  }`}
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                      handleImageFileUpload(vIdx, e.dataTransfer.files[0]);
+                                    }
+                                  }}
+                                >
+                                  {uploadingSlot?.variantIdx === vIdx && uploadingSlot?.photoIdx === (variant.imagenes?.length || 0) ? (
+                                    <div className="flex flex-col items-center justify-center p-2">
+                                      <Loader2 className="w-6 h-6 animate-spin text-[#A8577F] mb-2" />
+                                      <span className="text-[11px] font-bold text-stone-700">{uploadStatusText || 'Subiendo a Vercel Blob...'}</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
+                                        <div className="w-9 h-9 rounded-full bg-[#FAF0F4] group-hover/add:bg-[#A8577F] group-hover/add:text-white text-[#A8577F] flex items-center justify-center mb-1.5 transition-colors">
+                                          <Plus className="w-5 h-5" />
+                                        </div>
+                                        <span className="text-xs font-bold text-stone-800 group-hover/add:text-[#A8577F] transition-colors">
+                                          + Añadir foto
+                                        </span>
+                                        <span className="text-[10px] text-stone-400 mt-0.5">
+                                          Foto {(variant.imagenes?.length || 0) + 1} de 4
+                                        </span>
+                                        <span className="mt-2 px-2.5 py-1 rounded-full bg-stone-100 group-hover/add:bg-[#FAF0F4] text-[10px] font-semibold text-stone-600 group-hover/add:text-[#8C3D65] transition-colors flex items-center gap-1">
+                                          <Upload className="w-2.5 h-2.5" />
+                                          <span>Subir archivo</span>
+                                        </span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                              handleImageFileUpload(vIdx, e.target.files[0]);
+                                            }
+                                          }}
+                                        />
+                                      </label>
+
+                                      {/* Opción de pegar URL */}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const url = window.prompt('Ingresa la URL directa de la imagen (https://...):');
+                                          if (url && url.trim()) {
+                                            handleAddImageUrl(vIdx, url.trim());
+                                          }
+                                        }}
+                                        className="mt-1 text-[10px] text-stone-400 hover:text-[#A8577F] hover:underline flex items-center gap-0.5 z-10"
+                                        title="Pegar enlace de internet"
+                                      >
+                                        <LinkIcon className="w-2.5 h-2.5" />
+                                        <span>o pegar URL</span>
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
+
+                            {/* Alerta de progreso si está subiendo en esta variante */}
+                            {uploadingSlot?.variantIdx === vIdx && (
+                              <div className="mt-2.5 p-2 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2 text-xs text-amber-900 animate-pulse">
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-600 shrink-0" />
+                                <div className="flex-grow">
+                                  <div className="flex justify-between items-center text-[11px] font-semibold">
+                                    <span>{uploadStatusText || 'Subiendo imagen a Vercel Blob...'}</span>
+                                  </div>
+                                  <div className="w-full bg-amber-200 h-1 rounded-full mt-1 overflow-hidden">
+                                    <div className="bg-amber-600 h-full w-2/3 animate-[pulse_1s_infinite] rounded-full" />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <p className="text-[10px] text-stone-400 mt-2">
+                              💡 Puedes arrastrar y soltar fotos desde tu computadora directamente sobre cualquier slot para subirlas o reemplazarlas.
+                            </p>
                           </div>
                         </div>
                       ))}
