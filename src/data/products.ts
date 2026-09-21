@@ -86,48 +86,6 @@ export const initialProducts: Product[] = [
     ]
   },
   {
-    "id": "zu-gorro-antifluido",
-    "nombre": "Gorro Quirúrgico Ergonómico Ajustable",
-    "categoria": "Gorros Quirúrgicos",
-    "descripcion": "Gorro antifluido con diseño de ajuste posterior mediante lazo y banda elástica, pensado para acomodar tanto cabello corto como coletas o moños voluminosos. Incluye toalla interna en la frente para absorción de sudor.",
-    "precio": 25000,
-    "tallas": [
-      "Ajustable"
-    ],
-    "genero": "Unisex",
-    "destacado": false,
-    "tela": "Microfibra Antifluido Cloro-resistente",
-    "caracteristicas": [
-      "Banda absorbente en felpa de algodón en la zona de la frente",
-      "Botones laterales opcionales para sujetar el tapabocas y aliviar las orejas",
-      "No destiñe con el lavado frecuente ni con desinfectantes",
-      "Personalizable con bordado de tu nombre o logo"
-    ],
-    "variantesColor": [
-      {
-        "color": "Rosa Pastel Liso",
-        "colorHex": "#F4B8CC",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Mauve ZUniforme",
-        "colorHex": "#A8577F",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Azul Quirófano",
-        "colorHex": "#2B6CB0",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1000&auto=format&fit=crop"
-        ]
-      }
-    ]
-  },
-  {
     "id": "zu-bata-estetica",
     "nombre": "Bata Antifluido Silueta Slim & Spa",
     "categoria": "Batas Médicas & Spa",
