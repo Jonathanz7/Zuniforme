@@ -86,54 +86,6 @@ export const initialProducts: Product[] = [
     ]
   },
   {
-    "id": "zu-pantalon-jogger",
-    "nombre": "Pantalón Scrub Jogger Clínico",
-    "categoria": "Pantalones Jogger",
-    "descripcion": "Pantalón tipo jogger con pretina ancha de tiro medio-alto, cordón decorativo ajustable y bota con elástico anatómico que no corta la circulación. Diseñado con 6 bolsillos estratégicamente ubicados para tijeras, teléfono, sellos y notas clínicas.",
-    "precio": 72000,
-    "tallas": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL",
-      "XXL"
-    ],
-    "genero": "Femenino",
-    "destacado": false,
-    "tela": "Antifluido Spandex Bidireccional",
-    "caracteristicas": [
-      "Pretina suave que no marca el abdomen ni genera incomodidad",
-      "Costuras dobles reforzadas en entrepierna y tiro",
-      "Bolsillo cargo con división especial para bolígrafo y linterna",
-      "Fácil lavado y secado ultra rápido en menos de 2 horas"
-    ],
-    "variantesColor": [
-      {
-        "color": "Mauve ZUniforme",
-        "colorHex": "#A8577F",
-        "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959838230-zu-pantalon-jogger-mauve-zuniforme.jpg",
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Azul Marino",
-        "colorHex": "#1B2A4A",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=1000&auto=format&fit=crop"
-        ]
-      },
-      {
-        "color": "Negro",
-        "colorHex": "#222222",
-        "imagenes": [
-          "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=1000&auto=format&fit=crop"
-        ]
-      }
-    ]
-  },
-  {
     "id": "zu-gorro-antifluido",
     "nombre": "Gorro Quirúrgico Ergonómico Ajustable",
     "categoria": "Gorros Quirúrgicos",
