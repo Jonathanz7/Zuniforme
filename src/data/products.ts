@@ -3,10 +3,10 @@ import { Product } from '../types';
 export const initialProducts: Product[] = [
   {
     "id": "zu-scrub-aura",
-    "nombre": "Conjunto Quirúrgico Aura Stretch",
+    "nombre": "Conjunto Esperanza",
     "categoria": "Uniformes Quirúrgicos",
-    "descripcion": "Conjunto femenino de blusa cuello en V anatómico y pantalón jogger con pretina elástica de alto soporte. Confeccionado en tela antifluido Lafayette con 4% spandex para máxima libertad de movimiento durante jornadas extensas en quirófano, consultorio o clínica.",
-    "precio": 135000,
+    "descripcion": "Conjunto femenino de blusa cuello en V y pantalón jogger, diseñado para brindar comodidad, libertad de movimiento y un ajuste práctico durante jornadas de trabajo prolongadas. Cuenta con bolsillos funcionales y pretina elástica con cordón.",
+    "precio": 115000,
     "tallas": [
       "XS",
       "S",
@@ -26,9 +26,10 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Negro Azabache",
-        "colorHex": "#212529",
+        "color": "Rosa Esperanza 🌸",
+        "colorHex": "#C70033",
         "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959922760-1.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959837004-zu-scrub-aura-negro-azabache.jpg",
           "https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=1000&auto=format&fit=crop"
         ]
