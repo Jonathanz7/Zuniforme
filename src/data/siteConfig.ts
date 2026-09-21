@@ -1,20 +1,20 @@
 import { SiteConfig } from '../types';
 
 export const siteConfig: SiteConfig = {
-  nombreMarca: 'ZUniforme',
-  subtitulo: 'Uniformes antifluidos y ropa de trabajo para el sector salud y empresas',
-  ciudad: 'Neiva',
-  departamento: 'Huila',
-  pais: 'Colombia',
-  whatsappNumero: '573228539863', // Default contact number
-  whatsappFormatoDisplay: '+57 322 853 9863',
-  instagramUsuario: 'zuniforme',
-  instagramUrl: 'https://instagram.com/zuniforme',
-  emailContacto: 'contacto@zuniforme.com',
-  direccionLocal: 'Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia',
-  horarioAtencion: 'Lunes a Sábado: 8:00 AM - 6:30 PM',
-  imagenNuestraHistoria: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=1000&auto=format&fit=crop',
-  imagenHero: 'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop'
+  "nombreMarca": "ZUniforme",
+  "subtitulo": "Uniformes antifluidos y ropa de trabajo para el sector salud y empresas",
+  "ciudad": "Neiva",
+  "departamento": "Huila",
+  "pais": "Colombia",
+  "whatsappNumero": "573228539863",
+  "whatsappFormatoDisplay": "+57 322 853 9863",
+  "instagramUsuario": "zuniforme",
+  "instagramUrl": "https://instagram.com/zuniforme",
+  "emailContacto": "contacto@zuniforme.com",
+  "direccionLocal": "Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia",
+  "horarioAtencion": "Lunes a Sábado: 8:00 AM - 6:30 PM",
+  "imagenNuestraHistoria": "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789962686945-site-imagennuestrahistoria-home.png",
+  "imagenHero": "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop"
 };
 
 export const BRAND_COLORS = {
