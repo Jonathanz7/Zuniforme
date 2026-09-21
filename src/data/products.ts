@@ -29,7 +29,7 @@ export const initialProducts: Product[] = [
         "color": "Rosa Esperanza 🌸",
         "colorHex": "#C70033",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789959922760-1.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789962092939-1.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960472940-2.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960478168-3.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960483749-4.png"
