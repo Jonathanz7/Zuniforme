@@ -54,9 +54,9 @@ export const initialProducts: Product[] = [
     "destacado": true,
     "tela": "Antifluido semi-impermeable con forro interior transpirableTela / composición: Lafayette 4-Way Stretch — 96% poliéster, 4% spandex",
     "caracteristicas": [
-      "Puños y cuello en rib elástico resistente al desgaste",
-      "Cierre central dorado / oro rosa de alta durabilidad",
-      "2 bolsillos con cremallera oculta para guardar llaves o celular",
+      "Cuello alto con cremallera frontal",
+      "Diseño sin mangas",
+      "Pretina elástica",
       "Corte semi-ajustado que resalta la figura femenina"
     ],
     "variantesColor": [
