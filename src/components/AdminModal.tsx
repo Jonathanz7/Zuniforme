@@ -13,7 +13,7 @@ import {
   RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
   AlertCircle, CheckCircle2, Loader2, ShieldCheck,
   ExternalLink, Server, CloudUpload, ArrowLeft, ArrowRight,
-  Link as LinkIcon, ChevronUp, ChevronDown
+  Link as LinkIcon, ChevronUp, ChevronDown, Star
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -258,12 +258,42 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       updatedList = [sanitizedProduct, ...products];
     }
 
+    // Si este producto es marcado como destacado, asegurar que sea el único destacado en la portada
+    if (sanitizedProduct.destacado) {
+      updatedList = updatedList.map((p) => ({
+        ...p,
+        destacado: p.id === sanitizedProduct.id,
+      }));
+    }
+
     // 1. Guardar de inmediato en memoria y localStorage del navegador
     onSaveProducts(updatedList);
     setActiveTab('lista');
     setEditingProduct(null);
 
     // 2. Publicar a través de la función serverless segura
+    await publishToVercel(updatedList);
+  };
+
+  /**
+   * Cambia el producto destacado directamente desde la lista de prendas
+   */
+  const handleQuickToggleDestacado = async (productId: string) => {
+    const targetProduct = products.find(p => p.id === productId);
+    const willBeDestacado = !targetProduct?.destacado;
+
+    const updatedList = products.map((p) => ({
+      ...p,
+      destacado: willBeDestacado ? p.id === productId : false,
+    }));
+
+    onSaveProducts(updatedList);
+    showNotification(
+      willBeDestacado
+        ? `⭐ "${targetProduct?.nombre}" es ahora el producto destacado de la portada.`
+        : `Prenda desmarcada como destacada.`,
+      'info'
+    );
     await publishToVercel(updatedList);
   };
 
@@ -1105,11 +1135,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                               )}
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <h4 className="text-sm font-bold text-stone-900 truncate">{prod.nombre}</h4>
                                 {prod.destacado && (
-                                  <span className="text-[10px] bg-[#A8577F] text-white px-2 py-0.5 rounded-full font-bold shrink-0">
-                                    Destacado
+                                  <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full font-bold shrink-0 flex items-center gap-1">
+                                    <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                                    <span>Destacado en Hero</span>
                                   </span>
                                 )}
                               </div>
@@ -1130,7 +1161,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickToggleDestacado(prod.id)}
+                              disabled={isPublishing}
+                              className={`p-2 rounded-xl transition-all disabled:opacity-50 ${
+                                prod.destacado
+                                  ? 'text-amber-500 bg-amber-100/80 hover:bg-amber-100 ring-1 ring-amber-300'
+                                  : 'text-stone-300 hover:text-amber-500 hover:bg-stone-200'
+                              }`}
+                              title={
+                                prod.destacado
+                                  ? '⭐ Prenda destacada en la portada del Hero (haz clic para desmarcar)'
+                                  : '⭐ Marcar como prenda destacada en portada del Hero'
+                              }
+                            >
+                              <Star className={`w-4 h-4 ${prod.destacado ? 'fill-amber-500' : ''}`} />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleStartEdit(prod)}
@@ -1245,17 +1293,59 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     />
                   </div>
 
-                  {/* Options row */}
-                  <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-stone-700">
-                      <input
-                        type="checkbox"
-                        checked={editingProduct.destacado || false}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, destacado: e.target.checked })}
-                        className="w-4 h-4 rounded text-[#A8577F] focus:ring-[#A8577F]"
-                      />
-                      <span>Destacar este producto en la parte superior</span>
-                    </label>
+                  {/* Destacado Hero Toggle Switch Card */}
+                  <div className={`p-4 rounded-2xl border transition-all ${
+                    editingProduct.destacado
+                      ? 'bg-amber-50/80 border-amber-300 shadow-xs'
+                      : 'bg-stone-50 border-stone-200'
+                  }`}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          editingProduct.destacado
+                            ? 'bg-amber-400 text-stone-900 shadow-xs'
+                            : 'bg-stone-200 text-stone-400'
+                        }`}>
+                          <Star className={`w-5 h-5 ${editingProduct.destacado ? 'fill-current' : ''}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <label
+                            htmlFor="toggle-destacado-hero"
+                            className="block text-xs font-bold uppercase tracking-wider text-stone-800 cursor-pointer"
+                          >
+                            ⭐ Marcar como producto destacado (portada del Hero)
+                          </label>
+                          <p className="text-[11px] text-stone-500 mt-0.5 leading-relaxed">
+                            {editingProduct.destacado ? (
+                              <span className="text-amber-900 font-medium">
+                                Esta prenda es la imagen principal de bienvenida. Al guardar, ningún otro producto quedará como destacado.
+                              </span>
+                            ) : (
+                              <span>
+                                Activa este interruptor para que esta prenda y su foto aparezcan en la tarjeta principal de la portada.
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        id="toggle-destacado-hero"
+                        role="switch"
+                        aria-checked={editingProduct.destacado || false}
+                        onClick={() => setEditingProduct({ ...editingProduct, destacado: !editingProduct.destacado })}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#A8577F] focus:ring-offset-2 ${
+                          editingProduct.destacado ? 'bg-[#A8577F]' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            editingProduct.destacado ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Tallas Disponibles Section */}
@@ -1801,10 +1891,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-stone-900">
-                          Fotografías de Secciones del Sitio Web
+                          Fotografía de Identidad — Nuestra Historia
                         </h4>
                         <p className="text-xs text-stone-600 mt-1 leading-relaxed max-w-2xl">
-                          Aquí puedes actualizar las imágenes de fondo e identidad que se muestran fuera del catálogo de prendas (por ejemplo la de <strong>Nuestra Historia</strong> y la del <strong>Hero Principal</strong>). Las fotos se comprimen y suben a Vercel Blob, y al presionar <strong>Guardar y Publicar</strong> se genera un commit automático en <code>src/data/siteConfig.ts</code> en GitHub.
+                          Aquí puedes actualizar la imagen de fondo e identidad que se muestra en la sección <strong>Nuestra Historia</strong>. La foto se comprime y sube a Vercel Blob, y al presionar <strong>Guardar y Publicar</strong> se genera un commit automático en <code>src/data/siteConfig.ts</code> en GitHub.
+                        </p>
+                        <p className="text-[11px] text-[#8C3D65] font-medium mt-1">
+                          💡 La foto del <strong>Hero Principal</strong> se toma automáticamente de la prenda marcada como <strong>⭐ Destacado</strong> en la pestaña "Catálogo de Prendas".
                         </p>
                       </div>
                     </div>
@@ -1824,15 +1917,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Grid de Secciones Editables */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                    {/* SECCIÓN 1: FOTO NUESTRA HISTORIA */}
-                    <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
-                      <div className="space-y-3">
+                  {/* Sección Editable: Fotografía de Nuestra Historia */}
+                  <div className="max-w-2xl mx-auto w-full">
+                    <div className="p-5 sm:p-6 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
+                      <div className="space-y-4">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FCE8EF] text-[#8C3D65]">
-                            Sección 1: Historia & Esencia
+                            Sección: Historia & Esencia
                           </span>
                           <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
                             src/components/AboutSection.tsx
@@ -1850,7 +1941,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                         {/* Vista previa con proporción real de AboutSection (4:4.5) */}
                         <div 
-                          className="relative aspect-[4/4.5] w-full rounded-2xl overflow-hidden bg-stone-100 border-2 border-stone-200 group"
+                          className="relative aspect-[4/3] sm:aspect-[4/3.5] w-full rounded-2xl overflow-hidden bg-stone-100 border-2 border-stone-200 group"
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1858,9 +1949,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           onDrop={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                              handleSiteImageUpload('imagenNuestraHistoria', e.dataTransfer.files[0]);
-                            }
                           }}
                         >
                           <img
@@ -1940,7 +2028,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Botones de acción para Sección 1 */}
+                      {/* Botones de acción para Nuestra Historia */}
                       <div className="mt-4 pt-3 border-t border-stone-100 flex flex-wrap items-center gap-2">
                         <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shadow-xs">
                           <Upload className="w-3.5 h-3.5" />
@@ -1984,165 +2072,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </button>
                       </div>
                     </div>
-
-
-                    {/* SECCIÓN 2: FOTO HERO PRINCIPAL */}
-                    <div className="p-5 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FCE8EF] text-[#8C3D65]">
-                            Sección 2: Portada de Bienvenida
-                          </span>
-                          <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
-                            src/components/Hero.tsx
-                          </span>
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-bold text-stone-900">
-                            Fotografía Destacada del Hero Principal
-                          </h4>
-                          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                            Tarjeta visual principal en la cabecera superior. Es la primera imagen que contemplan los usuarios al ingresar a ZUniforme.
-                          </p>
-                        </div>
-
-                        {/* Vista previa con proporción real del Hero (4:5) */}
-                        <div 
-                          className="relative aspect-[4/4.5] w-full rounded-2xl overflow-hidden bg-stone-100 border-2 border-stone-200 group"
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                              handleSiteImageUpload('imagenHero', e.dataTransfer.files[0]);
-                            }
-                          }}
-                        >
-                          <img
-                            src={localSiteConfig.imagenHero || defaultSiteConfig.imagenHero}
-                            alt="Previsualización Hero Principal"
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-
-                          {/* Simulación etiqueta de producto en Hero */}
-                          <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-xl shadow-md border border-stone-200/80 pointer-events-none flex items-center justify-between">
-                            <div>
-                              <span className="text-[9px] uppercase font-bold text-[#8C3D65]">Colección Signature</span>
-                              <p className="text-[11px] font-bold text-stone-800">Conjunto Aura Signature</p>
-                            </div>
-                            <span className="text-[11px] font-bold text-[#A8577F]">$135.000</span>
-                          </div>
-
-                          {/* Estado de carga durante la subida */}
-                          {uploadingSiteField === 'imagenHero' && (
-                            <div className="absolute inset-0 bg-stone-900/75 flex flex-col items-center justify-center p-4 text-center text-white backdrop-blur-xs z-20">
-                              <Loader2 className="w-8 h-8 animate-spin text-[#F4B8CC] mb-2" />
-                              <p className="text-xs font-bold">{siteUploadStatusText || 'Subiendo imagen...'}</p>
-                            </div>
-                          )}
-
-                          {/* Overlay para arrastrar y soltar */}
-                          <div className="absolute inset-0 bg-[#A8577F]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center text-white pointer-events-none">
-                            <Upload className="w-8 h-8 mb-1.5" />
-                            <p className="text-xs font-bold">Arrastra una nueva imagen aquí</p>
-                            <p className="text-[10px] text-white/80">o usa el botón de abajo</p>
-                          </div>
-                        </div>
-
-                        {/* Fuente de la foto actual */}
-                        <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-2 text-[11px]">
-                          <div className="truncate text-stone-600 font-mono">
-                            {localSiteConfig.imagenHero?.includes('vercel-storage.com') ? (
-                              <span className="text-emerald-700 font-medium font-sans flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                Guardada en Vercel Blob
-                              </span>
-                            ) : (
-                              <span className="text-stone-500 font-sans">
-                                Imagen externa / Unsplash
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (localSiteConfig.imagenHero) {
-                                  navigator.clipboard.writeText(localSiteConfig.imagenHero);
-                                  showNotification('URL copiada al portapapeles', 'info');
-                                }
-                              }}
-                              className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
-                              title="Copiar URL"
-                            >
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-                            {localSiteConfig.imagenHero && (
-                              <a
-                                href={localSiteConfig.imagenHero}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 text-stone-500 hover:text-stone-800 rounded hover:bg-stone-200 transition-colors"
-                                title="Abrir en pestaña nueva"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Botones de acción para Sección 2 */}
-                      <div className="mt-4 pt-3 border-t border-stone-100 flex flex-wrap items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#A8577F] hover:bg-[#8C3D65] transition-colors shadow-xs">
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Subir nueva foto</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                handleSiteImageUpload('imagenHero', e.target.files[0]);
-                                e.target.value = '';
-                              }
-                            }}
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const current = localSiteConfig.imagenHero || '';
-                            const url = window.prompt('Pega la URL directa de la imagen (https://...):', current);
-                            if (url !== null && url.trim()) {
-                              handleManualSiteImageUrlChange('imagenHero', url.trim());
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          <LinkIcon className="w-3.5 h-3.5" />
-                          <span>Pegar URL</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleResetSiteImage('imagenHero')}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors ml-auto"
-                          title="Restaurar a la foto original"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span className="hidden sm:inline">Restaurar</span>
-                        </button>
-                      </div>
-                    </div>
-
                   </div>
 
                   {/* Tarjeta de Publicación en GitHub */}

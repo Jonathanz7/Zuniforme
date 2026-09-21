@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, ShieldCheck, Sparkles, Scissors, MapPin, MessageCircle, Eye } from 'lucide-react';
 import { createWhatsAppLink, createGeneralWhatsAppMessage, formatCOP } from '../utils/formatters';
 import { Product, SiteConfig } from '../types';
@@ -14,25 +14,32 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, siteConfig = defaultSiteConfig }) => {
   const waLink = createWhatsAppLink(createGeneralWhatsAppMessage());
 
-  // Use the provided product or fallback to the first initial product
+  // Use the provided featured product or fallback to the first initial product
   const product = featuredProduct || initialProducts[0];
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
-  const [userSelectedVariant, setUserSelectedVariant] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Reset variant and image error whenever the active product changes
+  useEffect(() => {
+    setSelectedVariantIndex(0);
+    setImgError(false);
+  }, [product?.id]);
 
   // Safe index in case variants array changed
+  const variants = product?.variantesColor || [];
   const safeVariantIndex =
-    product?.variantesColor && selectedVariantIndex < product.variantesColor.length
+    variants.length > 0 && selectedVariantIndex < variants.length
       ? selectedVariantIndex
       : 0;
 
-  const currentVariant = product?.variantesColor?.[safeVariantIndex];
+  const currentVariant = variants[safeVariantIndex];
+
+  // Resolve best photo candidate directly from the product
   const displayImage =
-    userSelectedVariant && currentVariant?.imagenes?.[0]
-      ? currentVariant.imagenes[0]
-      : (siteConfig?.imagenHero ||
-         defaultSiteConfig.imagenHero ||
-         currentVariant?.imagenes?.[0] ||
-         'https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop');
+    currentVariant?.imagenes?.[0] ||
+    variants.find((v) => v.imagenes && v.imagenes.length > 0)?.imagenes?.[0] ||
+    initialProducts[0]?.variantesColor?.[0]?.imagenes?.[0] ||
+    '';
 
   return (
     <section id="inicio" className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 overflow-hidden">
@@ -141,16 +148,36 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, si
               
               {/* Main Photo Card - Clickable to open full detail modal */}
               <div 
-                onClick={() => onSelectProduct?.(product, currentVariant?.color)}
+                onClick={() => product && onSelectProduct?.(product, currentVariant?.color)}
                 className="group relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-[4/5] bg-stone-100 cursor-pointer transition-transform duration-300 hover:shadow-2xl"
               >
-                <img
-                  src={displayImage}
-                  alt={`${product?.nombre || 'Conjunto Aura'} en color ${currentVariant?.color || 'Mauve'}`}
-                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  loading="eager"
-                  referrerPolicy="no-referrer"
-                />
+                {!imgError && displayImage ? (
+                  <img
+                    src={displayImage}
+                    alt={`${product?.nombre || 'Conjunto ZUniforme'} en color ${currentVariant?.color || 'Rosa'}`}
+                    onError={() => setImgError(true)}
+                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  /* Respaldo de marca elegante si no hay foto o si la URL falla */
+                  <div className="w-full h-full bg-gradient-to-br from-[#FAF5F7] via-[#FCE8EF] to-[#F4B8CC]/40 flex flex-col items-center justify-center p-8 text-center select-none relative">
+                    <div className="w-20 h-20 rounded-2xl bg-white shadow-md flex items-center justify-center text-[#A8577F] mb-3 border border-[#F4B8CC]/60">
+                      <span className="font-heading font-extrabold text-2xl tracking-tight text-[#A8577F]">ZU</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#A8577F] text-white shadow-xs font-heading mb-2">
+                      <Sparkles className="w-3 h-3" />
+                      Producto Estrella
+                    </span>
+                    <h3 className="font-heading text-lg font-bold text-stone-900 max-w-xs">
+                      {product?.nombre || 'ZUniforme'}
+                    </h3>
+                    <p className="text-[11px] text-stone-600 mt-1 max-w-xs leading-relaxed">
+                      Confección médica de alta calidad, confort y repelencia a fluidos en Neiva.
+                    </p>
+                  </div>
+                )}
 
                 {/* Subtle gradient overlay at bottom */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
@@ -182,14 +209,14 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, si
                         Colección Signature
                       </span>
                       <h3 
-                        onClick={() => onSelectProduct?.(product, currentVariant?.color)}
+                        onClick={() => product && onSelectProduct?.(product, currentVariant?.color)}
                         className="font-heading text-sm font-bold text-stone-900 mt-1 cursor-pointer hover:text-[#A8577F] transition-colors"
                       >
                         {product?.nombre || 'Conjunto Aura'}
                       </h3>
                     </div>
                     <span className="font-heading text-sm font-bold text-[#A8577F] shrink-0">
-                      {product?.precio ? formatCOP(product.precio) : '$135.000 COP'}
+                      {product?.precio ? formatCOP(product.precio) : 'Consúltanos'}
                     </span>
                   </div>
                   
@@ -199,7 +226,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, si
                       <span className="text-[11px] text-stone-500 font-medium">
                         Color:{' '}
                         <strong className="text-stone-800 font-semibold">
-                          {currentVariant?.color || 'Mauve ZUniforme'}
+                          {currentVariant?.color || 'Color disponible'}
                         </strong>
                       </span>
                       <a 
@@ -212,8 +239,8 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, si
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      {product?.variantesColor && product.variantesColor.length > 0 ? (
-                        product.variantesColor.map((variant, idx) => {
+                      {variants.length > 0 ? (
+                        variants.map((variant, idx) => {
                           const isActive = idx === safeVariantIndex;
                           return (
                             <button
@@ -222,7 +249,7 @@ export const Hero: React.FC<HeroProps> = ({ featuredProduct, onSelectProduct, si
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedVariantIndex(idx);
-                                setUserSelectedVariant(true);
+                                setImgError(false);
                               }}
                               className={`w-6 h-6 rounded-full transition-all relative flex items-center justify-center cursor-pointer ${
                                 isActive
