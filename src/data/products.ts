@@ -2,6 +2,40 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
+    "id": "zu-1790346662728",
+    "nombre": "Bata médico",
+    "categoria": "Batas Médicas & Spa",
+    "descripcion": "Bata médica femenina de corte anatómico y diseño profesional, confeccionada en tela Lafayette 4-Way Stretch. Su diseño combina comodidad, libertad de movimiento y funcionalidad para acompañarte durante la jornada profesional. Cuenta con cuello clásico, cierre frontal con botones y bolsillos funcionales para llevar tus elementos esenciales.",
+    "precio": 130000,
+    "tallas": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "genero": "Femenino",
+    "destacado": false,
+    "tela": "Antifluido Lafayette 4-Way Stretch",
+    "caracteristicas": [
+      "Corte anatómico femenino",
+      "Cierre frontal con botones",
+      "Manga larga",
+      "Repelencia a salpicaduras y fluidos",
+      "Secado ultra rápido y tela suave"
+    ],
+    "variantesColor": [
+      {
+        "color": "Blanco Nieve",
+        "colorHex": "#F8F8F6",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790346873676-1.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790346877926-2.png"
+        ]
+      }
+    ]
+  },
+  {
     "id": "zu-scrub-aura",
     "nombre": "Conjunto Esperanza",
     "categoria": "Uniformes Quirúrgicos",
