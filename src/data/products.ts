@@ -68,6 +68,13 @@ export const initialProducts: Product[] = [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960478168-3.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789960483749-4.png"
         ]
+      },
+      {
+        "color": "Rosa Blush",
+        "colorHex": "#E29A91",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790348791641-chatgpt-image-sep-25-2026-10-06-10-am.png"
+        ]
       }
     ]
   },
