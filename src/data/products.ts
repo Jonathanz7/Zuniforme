@@ -84,6 +84,14 @@ export const initialProducts: Product[] = [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349271497-chatgpt-image-sep-25-2026-10-12-11-am.png",
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349274232-chatgpt-image-sep-25-2026-10-14-25-am.png"
         ]
+      },
+      {
+        "color": "Azul Cobalto",
+        "colorHex": "#314687",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349543246-chatgpt-image-sep-25-2026-10-18-40-am.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349703277-chatgpt-image-sep-25-2026-10-21-36-am.png"
+        ]
       }
     ]
   },
