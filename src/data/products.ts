@@ -2,6 +2,35 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
+    "id": "zu-1791250766928",
+    "nombre": "Gorro",
+    "categoria": "Gorros Quirúrgicos",
+    "descripcion": "",
+    "precio": 25000,
+    "tallas": [
+      "Ajustable"
+    ],
+    "genero": "Femenino",
+    "destacado": false,
+    "tela": "Antifluido Lafayette 4-Way Stretch",
+    "caracteristicas": [
+      "Repelencia a salpicaduras y fluidos",
+      "Secado ultra rápido y tela suave"
+    ],
+    "variantesColor": [
+      {
+        "color": "Mauve ZUniforme",
+        "colorHex": "#A8577F",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791252105433-whatsapp-image-2026-10-05-at-8.58.58-pm.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791252060678-whatsapp-image-2026-10-05-at-8.58.56-pm-1-.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791252067537-whatsapp-image-2026-10-05-at-8.58.56-pm.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791252084539-whatsapp-image-2026-10-05-at-8.58.57-pm-2-.jpeg"
+        ]
+      }
+    ]
+  },
+  {
     "id": "zu-1790346662728",
     "nombre": "Bata médico",
     "categoria": "Batas Médicas & Spa",
