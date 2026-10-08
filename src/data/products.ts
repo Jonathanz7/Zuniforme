@@ -3,7 +3,7 @@ import { Product } from '../types';
 export const initialProducts: Product[] = [
   {
     "id": "zu-1791427615939",
-    "nombre": "Leticia",
+    "nombre": "Conjunto Leticia",
     "categoria": "Uniformes Quirúrgicos",
     "descripcion": "",
     "precio": 130000,
