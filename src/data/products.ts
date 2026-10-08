@@ -2,6 +2,38 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
+    "id": "zu-1791427615939",
+    "nombre": "Leticia",
+    "categoria": "Uniformes Quirúrgicos",
+    "descripcion": "",
+    "precio": 130000,
+    "tallas": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "genero": "Femenino",
+    "destacado": true,
+    "tela": "Antifluido Lafayette 4-Way Stretch",
+    "caracteristicas": [
+      "Repelencia a salpicaduras y fluidos",
+      "Secado ultra rápido y tela suave"
+    ],
+    "variantesColor": [
+      {
+        "color": "Vino tinto ",
+        "colorHex": "#550b1a",
+        "imagenes": [
+          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791427659763-4fd3bf12-ba2c-487b-84c1-26320b58dc73.jpeg"
+        ]
+      }
+    ]
+  },
+  {
     "id": "zu-1791250766928",
     "nombre": "Gorro",
     "categoria": "Gorros Quirúrgicos",
@@ -138,7 +170,7 @@ export const initialProducts: Product[] = [
       "XL"
     ],
     "genero": "Femenino",
-    "destacado": true,
+    "destacado": false,
     "tela": "Antifluido semi-impermeable con forro interior transpirableTela / composición: Lafayette 4-Way Stretch — 96% poliéster, 4% spandex",
     "caracteristicas": [
       "Cuello alto con cremallera frontal",
