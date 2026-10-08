@@ -13,7 +13,7 @@ import {
   RotateCcw, Sparkles, Image as ImageIcon, Upload, Save,
   AlertCircle, CheckCircle2, Loader2, ShieldCheck,
   ExternalLink, Server, CloudUpload, ArrowLeft, ArrowRight,
-  Link as LinkIcon, ChevronUp, ChevronDown, Star
+  Link as LinkIcon, ChevronUp, ChevronDown, Star, Phone, MapPin
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -1917,8 +1917,111 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Sección Editable: Fotografía de Nuestra Historia */}
-                  <div className="max-w-2xl mx-auto w-full">
+                  {/* Secciones Editables de Contenido y Contacto */}
+                  <div className="max-w-2xl mx-auto w-full space-y-6">
+
+                    {/* SECCIÓN 1: DATOS DE CONTACTO & TALLER */}
+                    <div className="p-5 sm:p-6 rounded-2xl border border-stone-200 bg-white shadow-sm space-y-4">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF0F4] text-[#8C3D65]">
+                          Canales Oficiales & Taller
+                        </span>
+                        <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
+                          src/data/siteConfig.ts
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shrink-0">
+                          <Phone className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-stone-900">
+                            Número de WhatsApp & Dirección del Taller
+                          </h4>
+                          <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                            Configuración de atención al cliente y ubicación física en Neiva mostrada en la cabecera, pie de página y botón flotante.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-2 border-t border-stone-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                              WhatsApp (Número para Enlaces wa.me)
+                            </label>
+                            <input
+                              type="text"
+                              value={localSiteConfig.whatsappNumero || ''}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                const newConfig = {
+                                  ...localSiteConfig,
+                                  whatsappNumero: val,
+                                };
+                                setLocalSiteConfig(newConfig);
+                                onSaveSiteConfig?.(newConfig);
+                              }}
+                              placeholder="573124578305"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs font-mono text-stone-900 focus:bg-white focus:border-[#A8577F] focus:outline-none"
+                            />
+                            <p className="text-[10px] text-stone-400 mt-1">
+                              Sin signos ni espacios (ej: <code>573124578305</code>)
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                              WhatsApp (Visualización en Pantalla)
+                            </label>
+                            <input
+                              type="text"
+                              value={localSiteConfig.whatsappFormatoDisplay || ''}
+                              onChange={(e) => {
+                                const newConfig = {
+                                  ...localSiteConfig,
+                                  whatsappFormatoDisplay: e.target.value,
+                                };
+                                setLocalSiteConfig(newConfig);
+                                onSaveSiteConfig?.(newConfig);
+                              }}
+                              placeholder="+57 312 457 8305"
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:bg-white focus:border-[#A8577F] focus:outline-none"
+                            />
+                            <p className="text-[10px] text-stone-400 mt-1">
+                              Texto formateado legible (ej: <code>+57 312 457 8305</code>)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-[#A8577F]" />
+                            <span>Dirección del Taller / Punto de Atención</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={localSiteConfig.direccionLocal || ''}
+                            onChange={(e) => {
+                              const newConfig = {
+                                ...localSiteConfig,
+                                direccionLocal: e.target.value,
+                              };
+                              setLocalSiteConfig(newConfig);
+                              onSaveSiteConfig?.(newConfig);
+                            }}
+                            placeholder="Carrera 33 D 23 sur 107 Manzanares V etapa, Neiva"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:bg-white focus:border-[#A8577F] focus:outline-none"
+                          />
+                          <p className="text-[10px] text-stone-400 mt-1">
+                            Aparece en el pie de página y en la sección "Contacto & Pedidos".
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECCIÓN 2: FOTOGRAFÍA DE NUESTRA HISTORIA */}
                     <div className="p-5 sm:p-6 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col justify-between">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between gap-2 flex-wrap">

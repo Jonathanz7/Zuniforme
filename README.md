@@ -153,11 +153,11 @@ export const siteConfig = {
   nombreMarca: 'ZUniforme',
   ciudad: 'Neiva',
   departamento: 'Huila',
-  whatsappNumero: '573228539863',         // Código de Colombia 57 + tu celular sin espacios ni signos
-  whatsappFormatoDisplay: '+57 322 853 9863',
+  whatsappNumero: '573124578305',         // Código de Colombia 57 + tu celular sin espacios ni signos
+  whatsappFormatoDisplay: '+57 312 457 8305',
   instagramUsuario: 'zuniforme',
   instagramUrl: 'https://instagram.com/zuniforme',
-  direccionLocal: 'Carrera 5 # 14-32, Centro, Neiva - Huila, Colombia',
+  direccionLocal: 'Carrera 33 D 23 sur 107 Manzanares V etapa, Neiva',
   // ...
 };
 ```
