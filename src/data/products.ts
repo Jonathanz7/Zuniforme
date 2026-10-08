@@ -27,8 +27,7 @@ export const initialProducts: Product[] = [
         "color": "Vino tinto ",
         "colorHex": "#550b1a",
         "imagenes": [
-          "https://images.unsplash.com/photo-1594824813589-9a25032fb778?q=80&w=1000&auto=format&fit=crop",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791427659763-4fd3bf12-ba2c-487b-84c1-26320b58dc73.jpeg"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791427835507-4fd3bf12-ba2c-487b-84c1-26320b58dc73.jpeg"
         ]
       }
     ]
