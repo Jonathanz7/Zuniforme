@@ -29,6 +29,18 @@ export const initialProducts: Product[] = [
         "imagenes": [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791427835507-4fd3bf12-ba2c-487b-84c1-26320b58dc73.jpeg"
         ]
+      },
+      {
+        "color": "Azul Marino",
+        "colorHex": "#0f162a",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791512839728-d558c33e-4381-4f4a-b4c1-3923d5136675.jpeg"
+        ]
+      },
+      {
+        "color": "Nuevo Color",
+        "colorHex": "#F4B8CC",
+        "imagenes": []
       }
     ]
   },
