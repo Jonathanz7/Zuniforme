@@ -2,37 +2,6 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
-    "id": "zu-1791849880178",
-    "nombre": "Conjunto Alma",
-    "categoria": "Uniformes Quirúrgicos",
-    "descripcion": "",
-    "precio": 140000,
-    "tallas": [
-      "XS",
-      "S",
-      "M",
-      "L",
-      "XL"
-    ],
-    "genero": "Femenino",
-    "destacado": false,
-    "tela": "Antifluido Lafayette 4-Way Stretch",
-    "caracteristicas": [
-      "Repelencia a salpicaduras y fluidos",
-      "Secado ultra rápido y tela suave"
-    ],
-    "variantesColor": [
-      {
-        "color": "Uva",
-        "colorHex": "#39023c",
-        "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791849929141-68967b03-e686-433e-9cd2-b48905cf98ec.jpeg",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791849918797-68967b03-e686-433e-9cd2-b48905cf98ec.jpeg"
-        ]
-      }
-    ]
-  },
-  {
     "id": "zu-1791427615939",
     "nombre": "Conjunto Leticia",
     "categoria": "Uniformes Quirúrgicos",
