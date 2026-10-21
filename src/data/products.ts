@@ -196,6 +196,13 @@ export const initialProducts: Product[] = [
         "imagenes": [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791850026124-68967b03-e686-433e-9cd2-b48905cf98ec.jpeg"
         ]
+      },
+      {
+        "color": "Mocca",
+        "colorHex": "#3c2118",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1792545423297-37504f2f-0fcd-4d8a-94b0-b2e4793d7af5.jpeg"
+        ]
       }
     ]
   }
