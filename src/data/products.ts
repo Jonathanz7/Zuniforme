@@ -45,7 +45,7 @@ export const initialProducts: Product[] = [
       "XL"
     ],
     "genero": "Femenino",
-    "destacado": false,
+    "destacado": true,
     "tela": "Antifluido Lafayette 4-Way Stretch",
     "caracteristicas": [
       "Repelencia a salpicaduras y fluidos",
@@ -199,7 +199,7 @@ export const initialProducts: Product[] = [
       "XL"
     ],
     "genero": "Femenino",
-    "destacado": true,
+    "destacado": false,
     "tela": "Antifluido semi-impermeable con forro interior transpirableTela / composición: Lafayette 4-Way Stretch — 96% poliéster, 4% spandex",
     "caracteristicas": [
       "Cuello alto con cremallera frontal",
