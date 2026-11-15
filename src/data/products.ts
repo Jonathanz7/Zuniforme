@@ -23,8 +23,8 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Mauve ZUniforme",
-        "colorHex": "#A8577F",
+        "color": "Azul Marino",
+        "colorHex": "#1f1c39",
         "imagenes": [
           "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758437691-whatsapp-image-2026-11-15-at-10.57.45-am.jpeg"
         ]
