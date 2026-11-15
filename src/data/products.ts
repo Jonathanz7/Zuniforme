@@ -2,21 +2,20 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
-    "id": "zu-1791427615939",
-    "nombre": "Conjunto Leticia",
+    "id": "zu-1794758345420",
+    "nombre": "Conjunto Victoria",
     "categoria": "Uniformes Quirúrgicos",
     "descripcion": "",
-    "precio": 130000,
+    "precio": 125000,
     "tallas": [
       "XS",
       "S",
       "M",
       "L",
-      "XL",
-      "XXL"
+      "XL"
     ],
     "genero": "Femenino",
-    "destacado": true,
+    "destacado": false,
     "tela": "Antifluido Lafayette 4-Way Stretch",
     "caracteristicas": [
       "Repelencia a salpicaduras y fluidos",
@@ -24,23 +23,12 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Vino tinto ",
-        "colorHex": "#550b1a",
+        "color": "Mauve ZUniforme",
+        "colorHex": "#A8577F",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791427835507-4fd3bf12-ba2c-487b-84c1-26320b58dc73.jpeg"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758376612-whatsapp-image-2026-11-15-at-10.56.06-am.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758367940-whatsapp-image-2026-11-15-at-10.56.06-am-1-.jpeg"
         ]
-      },
-      {
-        "color": "Azul Marino",
-        "colorHex": "#0f162a",
-        "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791512839728-d558c33e-4381-4f4a-b4c1-3923d5136675.jpeg"
-        ]
-      },
-      {
-        "color": "Nuevo Color",
-        "colorHex": "#F4B8CC",
-        "imagenes": []
       }
     ]
   },
@@ -181,7 +169,7 @@ export const initialProducts: Product[] = [
       "XL"
     ],
     "genero": "Femenino",
-    "destacado": false,
+    "destacado": true,
     "tela": "Antifluido semi-impermeable con forro interior transpirableTela / composición: Lafayette 4-Way Stretch — 96% poliéster, 4% spandex",
     "caracteristicas": [
       "Cuello alto con cremallera frontal",
@@ -191,17 +179,13 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Uva",
-        "colorHex": "#320233",
+        "color": "Ébano",
+        "colorHex": "#0B0B0D",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1791850026124-68967b03-e686-433e-9cd2-b48905cf98ec.jpeg"
-        ]
-      },
-      {
-        "color": "Mocca",
-        "colorHex": "#3c2118",
-        "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1792545423297-37504f2f-0fcd-4d8a-94b0-b2e4793d7af5.jpeg"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961282698-1.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961284977-2.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961288251-3.png",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961291950-4.png"
         ]
       }
     ]
