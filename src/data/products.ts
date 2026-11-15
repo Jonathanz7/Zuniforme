@@ -2,6 +2,36 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
+    "id": "zu-1794758411291",
+    "nombre": "Conjunto Aurora",
+    "categoria": "Uniformes Quirúrgicos",
+    "descripcion": "",
+    "precio": 130000,
+    "tallas": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "genero": "Femenino",
+    "destacado": false,
+    "tela": "Antifluido Lafayette 4-Way Stretch",
+    "caracteristicas": [
+      "Repelencia a salpicaduras y fluidos",
+      "Secado ultra rápido y tela suave"
+    ],
+    "variantesColor": [
+      {
+        "color": "Mauve ZUniforme",
+        "colorHex": "#A8577F",
+        "imagenes": [
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758437691-whatsapp-image-2026-11-15-at-10.57.45-am.jpeg"
+        ]
+      }
+    ]
+  },
+  {
     "id": "zu-1794758345420",
     "nombre": "Conjunto Victoria",
     "categoria": "Uniformes Quirúrgicos",
