@@ -211,13 +211,11 @@ export const initialProducts: Product[] = [
     ],
     "variantesColor": [
       {
-        "color": "Ébano",
-        "colorHex": "#0B0B0D",
+        "color": "Cafe Moka",
+        "colorHex": "#361b22",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961282698-1.png",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961284977-2.png",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961288251-3.png",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1789961291950-4.png"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794759197348-whatsapp-image-2026-11-15-at-11.12.16-am.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794759202223-whatsapp-image-2026-11-15-at-11.12.17-am.jpeg"
         ]
       }
     ]
