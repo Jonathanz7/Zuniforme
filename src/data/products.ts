@@ -38,7 +38,7 @@ export const initialProducts: Product[] = [
     "nombre": "Conjunto Victoria",
     "categoria": "Uniformes Quirúrgicos",
     "descripcion": "",
-    "precio": 125000,
+    "precio": 130000,
     "tallas": [
       "XS",
       "S",
