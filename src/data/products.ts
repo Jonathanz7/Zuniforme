@@ -170,11 +170,11 @@ export const initialProducts: Product[] = [
         ]
       },
       {
-        "color": "Marfil Perla",
-        "colorHex": "#D8D0C4",
+        "color": "Verde Manzana",
+        "colorHex": "#c0c9b6",
         "imagenes": [
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349271497-chatgpt-image-sep-25-2026-10-12-11-am.png",
-          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1790349274232-chatgpt-image-sep-25-2026-10-14-25-am.png"
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758917879-whatsapp-image-2026-11-15-at-11.05.39-am.jpeg",
+          "https://ckia3v7wbmlxmsag.public.blob.vercel-storage.com/products/1794758922728-whatsapp-image-2026-11-15-at-11.05.38-am.jpeg"
         ]
       },
       {
